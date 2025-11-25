@@ -4,6 +4,8 @@ db:
   host: 'mysql.clarksonmsda.org'
   db: 'threed_cliff_jump_registry'
 poll_user: 'threed'
+mapbox:
+  token: 'pk.eyJ1IjoidHJyMmtlIiwiYSI6ImNtaWVrYThtMjAzc2kya3ByNG9mdXEydzgifQ.1k4GZLo_1RnG6ed6O92bTQ'
 tables:
   user: 'Users'
   JumpLogs: 'JumpLogs'

@@ -1,10 +1,12 @@
 from flask import Flask
 from flask import render_template
-from flask import request,session, redirect, url_for, send_from_directory,make_response 
+from flask import request,session, redirect, url_for, send_from_directory,make_response
 from flask_session import Session
 from datetime import timedelta
 from user import user
 import time
+import yaml
+from pathlib import Path
 
 app = Flask(__name__,static_url_path='')
 
@@ -129,10 +131,13 @@ def session_test():
     return f"{session}"
 @app.route('/main')
 def main():
-    if checkSession() == False: 
+    if checkSession() == False:
         return redirect('/login')
     print("main loaded")
-    return render_template('main.html', title='Main menu')
+    # Load config for mapbox token
+    config = yaml.safe_load(Path('config.yml').read_text())
+    mapbox_token = config['mapbox']['token']
+    return render_template('main.html', title='Main menu', mapbox_token=mapbox_token)
 # endpoint route for static files
 @app.route('/static/<path:path>')
 def send_static(path):

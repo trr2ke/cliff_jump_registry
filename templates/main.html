@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Main menu</h1>
+    <!-- Mapbox CSS -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+
+    <h1>Cliff Jump & Rope Swing Registry</h1>
       <div id="menumsg">
 		Hello, {{ me.username }}  ({{ me.email }}, {{ me.user_type }})
 	  </div>
-	<br><br>
+	<br>
 
 	{% if me.user_type == 'admin' %}
 	<h3>User Management</h3>
@@ -13,8 +16,55 @@
 	<a href="/users/manage?pkval=new">Add New User</a><br>
 	<br>
 	{% endif %}
-	
+
 	<a href="/logout">Logout</a><br>
-	
-	
+	<br>
+
+	<!-- Map Container -->
+	<div id="map" style="width: 100%; height: 600px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+
+	<!-- Mapbox JS -->
+	<script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+	<script>
+		// Mapbox token loaded from config.yml
+		mapboxgl.accessToken = '{{ mapbox_token }}';
+
+		const map = new mapboxgl.Map({
+			container: 'map',
+			style: 'mapbox://styles/mapbox/outdoors-v12', // Outdoors style with terrain
+			center: [-98.5795, 39.8283], // Center of USA (you can change this)
+			zoom: 4,
+			pitch: 45, // Tilt the map for 3D effect
+			bearing: 0
+		});
+
+		// Add navigation controls
+		map.addControl(new mapboxgl.NavigationControl());
+
+		// Add terrain and 3D buildings
+		map.on('load', () => {
+			// Add terrain source
+			map.addSource('mapbox-dem', {
+				'type': 'raster-dem',
+				'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+				'tileSize': 512,
+				'maxzoom': 14
+			});
+
+			// Add terrain layer with exaggeration
+			map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+			// Add sky layer for better 3D effect
+			map.addLayer({
+				'id': 'sky',
+				'type': 'sky',
+				'paint': {
+					'sky-type': 'atmosphere',
+					'sky-atmosphere-sun': [0.0, 90.0],
+					'sky-atmosphere-sun-intensity': 15
+				}
+			});
+		});
+	</script>
+
 {% endblock %}
