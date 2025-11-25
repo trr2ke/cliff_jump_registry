@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+            <div class="error_text">
+                {% if obj.errors | length > 0 %}
+                    {% for error in obj.errors  %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+				{% endif %}
+            </div>
+            <div>
+                <form action="manage?action=insert" method="POST">
+                    <div class="form-group">
+    <label for="username">Username</label>
+    <input type="text" class="form-control" id="username" name="username"  value="{{obj.data[0].username}}" >
+</div>
+
+                    Email:<br>
+                    <input type="text" name="email" value="{{ obj.data[0].email }}" />
+                    <br>
+
+                    Password:<br>
+                    <input type="password" name="password" value="" />
+                    <br>
+
+                    Retype Password:<br>
+                    <input type="password" name="password2" value="" />
+                    <br>
+
+                    User Type:<br>
+                    <select name="user_type">
+                        {% for role in obj.roles %}
+                            {% if  obj.data[0].user_type == role.value %}
+                                <option selected="true" value="{{ role.value }}">{{ role.text }}</option>
+                            {% else %}
+                                <option value="{{ role.value }}">{{ role.text }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <br>
+                    <input type="submit" value="Submit" />
+                </form>
+                
+            </div>
+{% endblock %}

@@ -1,0 +1,14 @@
+db:
+  user: 'threed'
+  pw: 'Sep46694%'
+  host: 'mysql.clarksonmsda.org'
+  db: 'threed_cliff_jump_registry'
+poll_user: 'threed'
+tables:
+  user: 'Users'
+  JumpLogs: 'JumpLogs'
+  Locations: 'Locations'
+  LocationVerificaitons: 'LocationVerificaitons'
+  Reviews: 'Reviews'
+  SafetyReports: 'SafetyReports'
+
