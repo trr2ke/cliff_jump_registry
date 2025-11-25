@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- Mapbox CSS -->
-    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
-
     <h1>Cliff Jump & Rope Swing Registry</h1>
       <div id="menumsg">
 		Hello, {{ me.username }}  ({{ me.email }}, {{ me.user_type }})
@@ -31,10 +28,10 @@
 
 		const map = new mapboxgl.Map({
 			container: 'map',
-			style: 'mapbox://styles/mapbox/outdoors-v12', // Outdoors style with terrain
-			center: [-98.5795, 39.8283], // Center of USA (you can change this)
-			zoom: 4,
-			pitch: 45, // Tilt the map for 3D effect
+			style: 'mapbox://styles/mapbox/outdoors-v12', // Outdoors style with topo lines and terrain
+			center: [-72.9906, 44.1265], // Lincoln, Vermont
+			zoom: 12, // Zoomed in to show local terrain detail
+			pitch: 0, // Looking straight down
 			bearing: 0
 		});
 
