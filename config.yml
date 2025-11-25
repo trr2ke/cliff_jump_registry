@@ -5,7 +5,7 @@ db:
   db: 'threed_cliff_jump_registry'
 poll_user: 'threed'
 mapbox:
-  token: 'pk.eyJ1IjoidHJyMmtlIiwiYSI6ImNtaWVrYThtMjAzc2kya3ByNG9mdXEydzgifQ.1k4GZLo_1RnG6ed6O92bTQ'
+  token: 'pk.eyJ1IjoidHJyMmtlIiwiYSI6ImNtaWVrd3doNzA0NDczY3BzZGY0Y2JjMWMifQ.XanllrA8yHIowp-J-wfYkg'
 tables:
   user: 'Users'
   JumpLogs: 'JumpLogs'
