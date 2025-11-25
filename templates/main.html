@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Main menu</h1>
+      <div id="menumsg">
+		Hello, {{ me.username }}  ({{ me.email }}, {{ me.user_type }})
+	  </div>
+	<br><br>
+
+	{% if me.user_type == 'admin' %}
+	<h3>User Management</h3>
+	<a href="/users/manage">List All Users</a><br>
+	<a href="/users/manage?pkval=new">Add New User</a><br>
+	<br>
+	{% endif %}
+	
+	<a href="/logout">Logout</a><br>
+	
+	
+{% endblock %}
