@@ -1,0 +1,15 @@
+db:
+  user: 'threed'
+  pw: 'YOUR_DATABASE_PASSWORD_HERE'
+  host: 'mysql.clarksonmsda.org'
+  db: 'threed_cliff_jump_registry'
+poll_user: 'threed'
+mapbox:
+  token: 'YOUR_MAPBOX_TOKEN_HERE'
+tables:
+  user: 'Users'
+  JumpLogs: 'JumpLogs'
+  Locations: 'Locations'
+  LocationVerificaitons: 'LocationVerificaitons'
+  Reviews: 'Reviews'
+  SafetyReports: 'SafetyReports'
