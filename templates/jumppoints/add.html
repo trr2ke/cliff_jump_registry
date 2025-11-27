@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if obj.errors | length > 0 %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <strong>Please fix the following errors:</strong>
+        <ul class="mb-0 mt-2">
+            {% for error in obj.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <form action="manage?action=insert" method="POST" id="addJumpPointForm">
+        <!-- Hidden field for location_id -->
+        <input type="hidden" name="location_id" value="{{ obj.data[0].location_id if obj.data[0].location_id else location_id }}">
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Jump Point Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ obj.data[0].name }}" required placeholder="e.g., North Cliff 30ft, East Shore Rope">
+                <div class="form-text">Specific name for this jump point</div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="height_feet" class="form-label">Height (feet)</label>
+                <input type="number" class="form-control" id="height_feet" name="height_feet" value="{{ obj.data[0].height_feet }}" step="0.1" min="0" placeholder="e.g., 30">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="difficulty" class="form-label">Difficulty</label>
+                <select class="form-select" id="difficulty" name="difficulty">
+                    <option value="">-- Select --</option>
+                    {% for level in obj.difficulty_levels %}
+                        <option value="{{ level.value }}" {% if obj.data[0].difficulty == level.value %}selected{% endif %}>
+                            {{ level.text }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="position_description" class="form-label">Position Description</label>
+            <input type="text" class="form-control" id="position_description" name="position_description" value="{{ obj.data[0].position_description }}" placeholder="e.g., North cliff face, East shore ledge">
+            <div class="form-text">Where is this jump point located within the area?</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe the jump, landing area, approach, etc.">{{ obj.data[0].description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="dangers" class="form-label">Dangers/Warnings</label>
+            <textarea class="form-control" id="dangers" name="dangers" rows="2" placeholder="Submerged rocks, shallow areas, etc.">{{ obj.data[0].dangers }}</textarea>
+            <div class="form-text">Include any safety concerns or hazards specific to this jump point</div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Add Jump Point
+            </button>
+        </div>
+    </form>
+{% endblock %}

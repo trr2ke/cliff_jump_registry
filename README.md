@@ -12,17 +12,44 @@ A web application for the cliff jumping and rope swing community to safely share
 4. **Personal Logging**: Users track their jumps, favorite spots, and build a jump history
 5. **Community Moderation**: Trusted users verify location accuracy and flag dangerous conditions
 
-### User Types:
-- **Guest Users**: Can view locations and safety reports (read-only)
-- **Registered Users**: Can submit locations, write reviews, log jumps, report conditions (default for new registrations)
-- **Trusted Users**: Can verify new locations, moderate content, update critical safety info
-- **Admin Users**: Full CRUD on all tables, user management, site moderation
+### User Types & Permissions:
+- **Guest Users** (Default):
+  - Automatically assigned when visiting the site without logging in
+  - Can view all locations on the map and in lists
+  - Can view safety reports (read-only)
+  - Cannot add, edit, or delete locations
+  - Prompted to login or register to contribute
+
+- **Registered Users**:
+  - Can submit new locations with coordinates, descriptions, and safety info
+  - Can edit their own location submissions
+  - Can write reviews, log jumps, and report conditions
+  - Default role for new user registrations
+
+- **Trusted Users**:
+  - All Registered user permissions, plus:
+  - Can verify new locations submitted by others
+  - Can moderate content and update critical safety information
+  - Can edit any location to improve accuracy
+
+- **Admin Users**:
+  - Full CRUD access on all database tables
+  - User management capabilities (via Admin dropdown menu)
+  - Site-wide moderation and configuration
+  - Manually assigned role
 
 ### User Progression:
-1. New users who register an account start as **Registered** users
-2. When a Registered user submits a location and it is reviewed/verified by a Trusted user, they are promoted to **Trusted** status
-3. Admin status is manually assigned for site moderation purposes
-4. Guest status is for users browsing without logging in (read-only access)
+1. **New visitors** automatically start as **Guest** users with read-only access
+2. Guests can click "Login" or "Register" buttons in the navbar to create an account
+3. Upon registration, users are promoted to **Registered** status and can contribute content
+4. When a Registered user submits quality locations that are verified by Trusted users, they may be promoted to **Trusted** status
+5. **Admin** status is manually assigned by existing admins for site moderation purposes
+
+### Authentication Flow:
+- **First Visit**: Users are automatically logged in as Guest
+- **Guest Mode**: Full map and location viewing, with login/register prompts for contributions
+- **Login Required**: Adding, editing, or deleting locations requires registered account
+- **Session Duration**: 5 hours of inactivity before re-authentication required
 
 ### ER Diagram
 

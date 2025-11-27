@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if obj.errors | length > 0 %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <strong>Please fix the following errors:</strong>
+        <ul class="mb-0 mt-2">
+            {% for error in obj.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <form action="manage?action=insert" method="POST" id="addLocationForm">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Area Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ obj.data[0].name }}" required placeholder="e.g., Lincoln Quarry, Lake Champlain">
+                <div class="form-text">General location/area name (specific jump points will be added separately)</div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="latitude" class="form-label">Latitude <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="latitude" name="latitude" value="{{ obj.data[0].latitude }}" readonly>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="longitude" class="form-label">Longitude <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="longitude" name="longitude" value="{{ obj.data[0].longitude }}" readonly>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" placeholder="General description of the area, access information, parking, etc.">{{ obj.data[0].description }}</textarea>
+            <div class="form-text">Describe the overall location (you'll add specific jump points after creating the location)</div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Add Location
+            </button>
+        </div>
+    </form>
+{% endblock %}

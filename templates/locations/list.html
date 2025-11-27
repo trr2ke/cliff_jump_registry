@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-geo-alt"></i> Cliff Jump Locations</h1>
+        <div>
+            <a href="/main" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-map"></i> Back to Map
+            </a>
+            {% if me.user_type != 'guest' %}
+            <a href="manage?pkval=new" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Add New Location
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Height (ft)</th>
+                            <th>Difficulty</th>
+                            <th>Verified</th>
+                            <th>Submitted By</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in obj.data %}
+                        <tr>
+                            <td>{{ item.location_id }}</td>
+                            <td><strong>{{ item.name }}</strong></td>
+                            <td>
+                                {% if item.location_type == 'cliff_jump' %}
+                                    <span class="badge bg-danger">Cliff Jump</span>
+                                {% elif item.location_type == 'rope_swing' %}
+                                    <span class="badge bg-primary">Rope Swing</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Both</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.height_feet if item.height_feet else '-' }}</td>
+                            <td>{{ item.difficulty if item.difficulty else '-' }}</td>
+                            <td>
+                                {% if item.verified %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Yes</span>
+                                {% else %}
+                                    <span class="badge bg-warning"><i class="bi bi-hourglass"></i> No</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.submitted_by }}</td>
+                            <td>{{ item.submission_timestamp.strftime('%Y-%m-%d') if item.submission_timestamp else '-' }}</td>
+                            <td>
+                                {% if me.user_type != 'guest' %}
+                                <a href="manage?pkval={{ item.location_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if obj.data | length == 0 %}
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> No locations found. <a href="manage?pkval=new">Add your first location!</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
