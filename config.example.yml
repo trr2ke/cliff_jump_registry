@@ -8,8 +8,9 @@ mapbox:
   token: 'YOUR_MAPBOX_TOKEN_HERE'
 tables:
   user: 'Users'
+  jumppoint: 'JumpPoints'
+  location: 'Locations'
   JumpLogs: 'JumpLogs'
-  Locations: 'Locations'
-  LocationVerificaitons: 'LocationVerificaitons'
+  LocationVerifications: 'LocationVerifications'
   Reviews: 'Reviews'
   SafetyReports: 'SafetyReports'

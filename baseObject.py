@@ -1,7 +1,6 @@
 import yaml
 from pathlib import Path
 import pymysql
-import datetime
 
 class baseObject:
     def setup(self,config_path = 'config.yml'):
@@ -49,10 +48,9 @@ class baseObject:
         #print(sql,tokens)
         self.cur.execute(sql,tokens)
         self.data[n][self.pk] = self.cur.lastrowid
-    def update(self,n=0):
+    def update(self, n=0):
         sql = f'UPDATE `{self.tn}` SET '
-        parameters = []   
-        n=0
+        parameters = []
         for field in self.fields:
             if field in self.data[n].keys():
                 sql += f'`{field}` = %s,' 

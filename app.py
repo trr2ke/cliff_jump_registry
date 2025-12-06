@@ -19,17 +19,21 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)
 sess = Session()
 sess.init_app(app)
 
+def create_guest_session():
+    """Create a guest session with default guest user"""
+    session['user'] = {
+        'user_id': 0,
+        'username': 'Guest',
+        'email': 'guest@example.com',
+        'user_type': 'guest'
+    }
+    session['active'] = time.time()
+
 @app.route('/')
 def home():
     # Auto-login as guest if not already logged in
     if 'user' not in session or session.get('user') is None:
-        session['user'] = {
-            'user_id': 0,
-            'username': 'Guest',
-            'email': 'guest@example.com',
-            'user_type': 'guest'
-        }
-        session['active'] = time.time()
+        create_guest_session()
     return redirect('/main')
 
 @app.context_processor
@@ -365,26 +369,14 @@ def checkSession():
         if timeSinceAct > 500:
             session['msg'] = 'Your session has timed out.'
             # Create guest session instead of failing
-            session['user'] = {
-                'user_id': 0,
-                'username': 'Guest',
-                'email': 'guest@example.com',
-                'user_type': 'guest'
-            }
-            session['active'] = time.time()
+            create_guest_session()
             return True
         else:
             session['active'] = time.time()
             return True
     else:
         # No session exists - auto-create guest session
-        session['user'] = {
-            'user_id': 0,
-            'username': 'Guest',
-            'email': 'guest@example.com',
-            'user_type': 'guest'
-        }
-        session['active'] = time.time()
+        create_guest_session()
         return True  
 
 
