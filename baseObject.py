@@ -1,8 +1,37 @@
+"""
+Base Object Class
+=================
+
+Provides a base class for database object management with common CRUD operations.
+
+This class handles:
+- Database connection management
+- Dynamic table name resolution from config.yml
+- Field introspection from database schema
+- Common CRUD operations (Create, Read, Update, Delete)
+- Automatic primary key detection
+
+Child classes inherit these methods and add model-specific validation and business logic.
+"""
+
 import yaml
 from pathlib import Path
 import pymysql
 
 class baseObject:
+    """
+    Base class for database-backed objects.
+
+    Attributes:
+        fields (list): List of database field names (excluding primary key)
+        data (list): List of dictionaries representing database rows
+        pk (str): Primary key field name
+        errors (list): Validation error messages
+        config (dict): Configuration from config.yml
+        tn (str): Table name for this object
+        conn: Database connection object
+        cur: Database cursor object
+    """
     def setup(self,config_path = 'config.yml'):
         self.fields = []
         self.data = []
@@ -11,7 +40,6 @@ class baseObject:
         self.config_path = config_path
         self.config = yaml.safe_load(Path(self.config_path).read_text())
         self.tn = self.config['tables'][type(self).__name__]
-        #print(self.config)
         self.conn = pymysql.connect(host=self.config['db']['host'], port=3306, user=self.config['db']['user'],
                        passwd=self.config['db']['pw'], db=self.config['db']['db'], autocommit=True)
         self.cur = self.conn.cursor(pymysql.cursors.DictCursor)
@@ -29,7 +57,6 @@ class baseObject:
                 self.pk = row['Field']
             else:
                 self.fields.append(row['Field'])
-        #print(self.fields)
 
 
     def insert(self,n=0):
@@ -45,7 +72,6 @@ class baseObject:
         vals = vals[0:-2]
         sql += ') VALUES '
         sql += f'({vals});'
-        #print(sql,tokens)
         self.cur.execute(sql,tokens)
         self.data[n][self.pk] = self.cur.lastrowid
     def update(self, n=0):
@@ -58,7 +84,6 @@ class baseObject:
         sql = sql[0:-1]
         sql += f' WHERE `{self.pk}` = %s;'
         parameters.append(self.data[0][self.pk])
-        #print(sql,parameters)
         self.cur.execute(sql, parameters)
     
    

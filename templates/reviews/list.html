@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-star"></i> Reviews</h2>
+
+    {% if location_id %}
+    <a href="/reviews/manage?pkval=new&location_id={{ location_id }}" class="btn btn-success mb-3">
+        <i class="bi bi-plus-circle"></i> Add Review
+    </a>
+    {% endif %}
+
+    <div class="row">
+        {% if obj.data|length > 0 %}
+            {% for review in obj.data %}
+            <div class="col-md-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {{ review.location_name if review.location_name else 'Location #' + review.location_id|string }}
+                            <span class="badge bg-primary">{{ review.rating }}/5 ⭐</span>
+                        </h5>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> {{ review.username }}
+                                | <i class="bi bi-calendar"></i> Visited: {{ review.visit_date }}
+                            </small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-info">Safety: {{ review.safety_rating }}/5</span>
+                            <span class="badge bg-success">Access: {{ review.access_rating }}/5</span>
+                        </div>
+                        {% if review.review_text %}
+                        <p class="card-text">{{ review.review_text }}</p>
+                        {% endif %}
+                        {% if me and (review.user_id == me.user_id or me.user_type == 'admin') %}
+                        <div class="mt-2">
+                            {% if review.user_id == me.user_id %}
+                            <a href="/reviews/manage?pkval={{ review.review_id }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            {% endif %}
+                            <a href="/reviews/manage?action=delete&pkval={{ review.review_id }}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Delete this review?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                            {% if me.user_type == 'admin' and review.user_id != me.user_id %}
+                            <span class="badge bg-warning text-dark">Admin Delete</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No reviews yet. Be the first to review!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <a href="/main" class="btn btn-secondary mt-3">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+{% endblock %}

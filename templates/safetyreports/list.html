@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-shield-check"></i> Safety Reports</h2>
+    <p class="text-muted">Community-reported safety conditions</p>
+
+    {% if location_id %}
+    <a href="/safetyreports/manage?pkval=new&location_id={{ location_id }}" class="btn btn-warning mb-3">
+        <i class="bi bi-plus-circle"></i> Report Current Conditions
+    </a>
+    {% endif %}
+
+    {% if obj.data|length > 0 %}
+        {% for report in obj.data %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title">
+                        {% if report.location_name %}{{ report.location_name }}{% else %}Location Report{% endif %}
+                        {% if report.is_safe %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Safe</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Unsafe</span>
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted"><i class="bi bi-calendar"></i> {{ report.report_date }}</small>
+                </div>
+                <p><i class="bi bi-person"></i> Reported by: {{ report.username }}</p>
+                {% if report.water_depth %}<p><strong>Water Depth:</strong> {{ report.water_depth }} inches</p>{% endif %}
+                {% if report.water_temp %}<p><strong>Water Temp:</strong> {{ report.water_temp }}°F</p>{% endif %}
+                <p><strong>Conditions:</strong> {{ report.conditions }}</p>
+                {% if report.hazards %}<p class="text-danger"><strong>Hazards:</strong> {{ report.hazards }}</p>{% endif %}
+
+                {% if me and (report.user_id == me.user_id or me.user_type == 'admin') %}
+                <div class="mt-2">
+                    {% if report.user_id == me.user_id %}
+                    <a href="/safetyreports/manage?pkval={{ report.report_id }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    {% endif %}
+                    <a href="/safetyreports/manage?action=delete&pkval={{ report.report_id }}"
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Delete this safety report?')">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                    {% if me.user_type == 'admin' and report.user_id != me.user_id %}
+                    <span class="badge bg-warning text-dark">Admin Delete</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No safety reports available. Be the first to report!
+        </div>
+    {% endif %}
+
+    <a href="/main" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

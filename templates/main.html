@@ -16,6 +16,21 @@
                     {% endif %}
                 </span>
 
+                {% if me.user_type != 'guest' %}
+                <!-- User Features Dropdown -->
+                <div class="dropdown me-2">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-list"></i> My Activity
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="/jumplogs/manage"><i class="bi bi-journal-bookmark"></i> My Jump Log</a></li>
+                        <li><a class="dropdown-item" href="/reviews/manage"><i class="bi bi-star"></i> My Reviews</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/safetyreports/manage"><i class="bi bi-shield-exclamation"></i> Recent Unsafe Reports</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+
                 {% if me.user_type == 'admin' %}
                 <!-- Admin Dropdown Menu -->
                 <div class="dropdown me-2">
@@ -23,10 +38,11 @@
                         <i class="bi bi-gear-fill"></i> Admin
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                        <li><a class="dropdown-item" href="/users/manage"><i class="bi bi-people"></i> List All Users</a></li>
-                        <li><a class="dropdown-item" href="/users/manage?pkval=new"><i class="bi bi-person-plus"></i> Add New User</a></li>
+                        <li><a class="dropdown-item" href="/admin/analytics"><i class="bi bi-bar-chart-fill"></i> Analytics Dashboard</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/locations/manage"><i class="bi bi-geo-alt"></i> Manage Locations</a></li>
+                        <li><a class="dropdown-item" href="/users/manage"><i class="bi bi-people"></i> List All Users</a></li>
+                        <li><a class="dropdown-item" href="/users/manage?pkval=new"><i class="bi bi-person-plus"></i> Add New User</a></li>
                     </ul>
                 </div>
                 {% endif %}
@@ -174,14 +190,14 @@
 							data: geojson
 						});
 
-						// Add layer for markers
+						// Add layer for markers - simple blue for all locations
 						map.addLayer({
 							id: 'location-markers',
 							type: 'circle',
 							source: 'locations',
 							paint: {
 								'circle-radius': 10,
-								'circle-color': '#0066cc',  // Blue color for all locations
+								'circle-color': '#0066cc',  // Blue for all locations
 								'circle-stroke-width': 2,
 								'circle-stroke-color': '#ffffff'
 							}
@@ -217,22 +233,87 @@
 						// Create initial popup with loading message
 						const popup = new mapboxgl.Popup()
 							.setLngLat(e.lngLat)
-							.setHTML('<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading jump points...</div>')
+							.setHTML('<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading location data...</div>')
 							.addTo(map);
 
-						// Fetch jump points for this location
-						fetch(`/api/jumppoints/${props.location_id}`)
-							.then(response => response.json())
-							.then(data => {
-								const jumps = data.jumps;
+						// Fetch both jump points and reviews in parallel
+						Promise.all([
+							fetch(`/api/jumppoints/${props.location_id}`).then(r => r.json()),
+							fetch(`/api/reviews/${props.location_id}`).then(r => r.json())
+						])
+						.then(([jumpData, reviewData]) => {
+							const jumps = jumpData.jumps;
+							const reviews = reviewData.reviews;
+							const averages = reviewData.averages;
 
-								// Build popup content with jump points
+								// Build popup content starting with location header
 								let popupContent = `
-									<div style="max-width: 350px;">
+									<div style="max-width: 400px;">
 										<h4 class="mb-2"><i class="bi bi-geo-alt-fill"></i> ${props.name}</h4>
 										${props.description ? `<p class="small text-muted">${props.description}</p>` : ''}
-										<hr class="my-2">
 								`;
+
+								// Add safety warning banner if location is unsafe
+								if (props.is_unsafe) {
+									popupContent += `
+										<div class="alert alert-danger py-2 mb-2">
+											<strong><i class="bi bi-exclamation-triangle-fill"></i> UNSAFE CONDITIONS REPORTED</strong>
+											<br><small>Check recent safety reports before visiting</small>
+										</div>
+									`;
+								} else if (props.has_safety_report) {
+									popupContent += `
+										<div class="alert alert-success py-2 mb-2">
+											<i class="bi bi-check-circle"></i> Recent safety report available
+										</div>
+									`;
+								}
+
+								// Add review aggregate if reviews exist
+								if (averages && averages.review_count > 0) {
+									const avgRating = parseFloat(averages.avg_rating).toFixed(1);
+									const avgSafety = parseFloat(averages.avg_safety).toFixed(1);
+									const avgAccess = parseFloat(averages.avg_access).toFixed(1);
+									const stars = '⭐'.repeat(Math.round(avgRating));
+
+									popupContent += `
+										<div class="card bg-light mb-2">
+											<div class="card-body p-2">
+												<div class="d-flex justify-content-between align-items-center mb-1">
+													<strong>${avgRating} ${stars}</strong>
+													<small class="text-muted">${averages.review_count} review${averages.review_count !== 1 ? 's' : ''}</small>
+												</div>
+												<div class="d-flex gap-2">
+													<span class="badge bg-info" title="Safety Rating">Safety: ${avgSafety}/5</span>
+													<span class="badge bg-success" title="Access Rating">Access: ${avgAccess}/5</span>
+												</div>
+											</div>
+										</div>
+									`;
+								}
+
+								// Show recent reviews (max 2)
+								if (reviews && reviews.length > 0) {
+									popupContent += '<div class="mb-2"><h6 class="mb-1">Recent Reviews:</h6>';
+									const recentReviews = reviews.slice(0, 2);
+									recentReviews.forEach(review => {
+										const reviewStars = '⭐'.repeat(review.rating);
+										popupContent += `
+											<div class="border-start border-primary border-3 ps-2 mb-2">
+												<div class="small">
+													<strong>${review.username}</strong> ${reviewStars}
+													${review.review_text ? `<br><em>"${review.review_text.substring(0, 80)}${review.review_text.length > 80 ? '...' : ''}"</em>` : ''}
+												</div>
+											</div>
+										`;
+									});
+									if (reviews.length > 2) {
+										popupContent += `<small class="text-muted">+ ${reviews.length - 2} more review${reviews.length - 2 !== 1 ? 's' : ''}</small>`;
+									}
+									popupContent += '</div>';
+								}
+
+								popupContent += '<hr class="my-2">';
 
 								if (jumps.length > 0) {
 									popupContent += '<h6 class="mb-2">Jump Points:</h6><div class="list-group list-group-flush">';
@@ -270,30 +351,43 @@
 									popupContent += '<p class="text-muted mb-2"><i class="bi bi-info-circle"></i> No jump points added yet.</p>';
 								}
 
-								// Add buttons
-								popupContent += '<hr class="my-2"><div class="d-flex justify-content-between gap-2">';
+								// Add buttons section
+								popupContent += '<hr class="my-2">';
 
 								{% if me.user_type != 'guest' %}
-								popupContent += `<a href="/jumppoints/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-success flex-fill"><i class="bi bi-plus-circle"></i> Add Jump</a>`;
+								// Action buttons for registered users
+								popupContent += '<div class="d-grid gap-2 mb-2">';
+								popupContent += `<a href="/jumppoints/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-success"><i class="bi bi-plus-circle"></i> Add Jump Point</a>`;
+								popupContent += `<a href="/reviews/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-primary"><i class="bi bi-star"></i> Write Review</a>`;
+								popupContent += `<a href="/safetyreports/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-warning"><i class="bi bi-shield-exclamation"></i> Report Conditions</a>`;
+								popupContent += '</div>';
 								{% endif %}
+
+								// View links
+								popupContent += '<div class="d-flex gap-2 mb-2">';
+								popupContent += `<a href="/reviews/manage?location_id=${props.location_id}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-star"></i> View Reviews</a>`;
+								popupContent += `<a href="/safetyreports/manage?location_id=${props.location_id}" class="btn btn-sm btn-outline-secondary flex-fill"><i class="bi bi-shield-check"></i> Safety Reports</a>`;
+								popupContent += '</div>';
 
 								{% if me.user_type == 'admin' or me.user_type == 'trusted' %}
-								popupContent += `<a href="/locations/manage?pkval=${props.location_id}" class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-pencil"></i> Edit Area</a>`;
+								popupContent += '<div class="d-grid gap-2">';
+								popupContent += `<a href="/locations/manage?pkval=${props.location_id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit Location</a>`;
+								popupContent += '</div>';
 								{% endif %}
 
-								popupContent += '</div></div>';
+								popupContent += '</div>';
 
 								popup.setHTML(popupContent);
-							})
-							.catch(error => {
-								console.error('Error loading jump points:', error);
-								popup.setHTML(`
-									<div>
-										<h4>${props.name}</h4>
-										<p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error loading jump points</p>
-									</div>
-								`);
-							});
+						})
+						.catch(error => {
+							console.error('Error loading location data:', error);
+							popup.setHTML(`
+								<div>
+									<h4>${props.name}</h4>
+									<p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error loading location data</p>
+								</div>
+							`);
+						});
 					});
 
 					// Change cursor on hover

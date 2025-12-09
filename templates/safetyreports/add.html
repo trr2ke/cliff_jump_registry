@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-shield-plus"></i> Report Safety Conditions</h2>
+
+    <form method="POST" action="/safetyreports/manage?action=insert">
+        {% if obj.errors|length > 0 %}
+        <div class="alert alert-danger">
+            {% for error in obj.errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if location_id %}
+        <input type="hidden" name="location_id" value="{{ location_id }}">
+        {% else %}
+        <div class="mb-3">
+            <label for="location_id" class="form-label">Location *</label>
+            <select class="form-select" name="location_id" id="location_id" required>
+                <option value="">Select a location...</option>
+            </select>
+        </div>
+        <script>
+            // Populate locations dropdown
+            fetch('/api/locations')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('location_id');
+                    data.features.forEach(feature => {
+                        const option = document.createElement('option');
+                        option.value = feature.properties.location_id;
+                        option.textContent = feature.properties.name;
+                        select.appendChild(option);
+                    });
+                });
+        </script>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">Report Date *</label>
+            <input type="date" class="form-control" name="report_date" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Is it safe to jump? *</label>
+            <select class="form-select" name="is_safe" required>
+                <option value="1">✓ Yes - Safe to jump</option>
+                <option value="0">✗ No - Unsafe conditions</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Current Conditions *</label>
+            <textarea class="form-control" name="conditions" rows="3" required placeholder="Describe water clarity, weather, etc."></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Water Depth (inches)</label>
+            <input type="number" class="form-control" name="water_depth" placeholder="e.g., 60">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Water Temperature (°F)</label>
+            <input type="number" class="form-control" name="water_temp" placeholder="e.g., 68">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Hazards</label>
+            <textarea class="form-control" name="hazards" rows="2" placeholder="Any debris, rocks, low water, etc."></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Photo URL</label>
+            <input type="text" class="form-control" name="photo_url" placeholder="https://...">
+        </div>
+
+        <button type="submit" class="btn btn-warning">Submit Report</button>
+        <a href="/main" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

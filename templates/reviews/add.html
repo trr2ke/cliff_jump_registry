@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-star-fill"></i> Add Review</h2>
+
+    <form method="POST" action="/reviews/manage?action=insert">
+        {% if obj.errors|length > 0 %}
+        <div class="alert alert-danger">
+            {% for error in obj.errors %}<p class="error_text">{{ error|safe }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if location_id %}
+        <input type="hidden" name="location_id" value="{{ location_id }}">
+        {% else %}
+        <div class="mb-3">
+            <label for="location_id" class="form-label">Location *</label>
+            <select class="form-select" name="location_id" id="location_id" required>
+                <option value="">Select a location...</option>
+            </select>
+        </div>
+        <script>
+            // Populate locations dropdown
+            fetch('/api/locations')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('location_id');
+                    data.features.forEach(feature => {
+                        const option = document.createElement('option');
+                        option.value = feature.properties.location_id;
+                        option.textContent = feature.properties.name;
+                        select.appendChild(option);
+                    });
+                });
+        </script>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">Overall Rating *</label>
+            <select class="form-select" name="rating" required>
+                <option value="">Select...</option>
+                {% for i in range(1, 6) %}
+                <option value="{{ i }}">{{ i }} Star{% if i > 1 %}s{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Safety Rating *</label>
+            <select class="form-select" name="safety_rating" required>
+                <option value="">Select...</option>
+                {% for i in range(1, 6) %}
+                <option value="{{ i }}">{{ i }} - {% if i == 1 %}Very Unsafe{% elif i == 3 %}Moderate{% elif i == 5 %}Very Safe{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Access Rating *</label>
+            <select class="form-select" name="access_rating" required>
+                <option value="">Select...</option>
+                {% for i in range(1, 6) %}
+                <option value="{{ i }}">{{ i }} - {% if i == 1 %}Very Difficult{% elif i == 3 %}Moderate{% elif i == 5 %}Very Easy{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="visit_date" class="form-label">Visit Date *</label>
+            <input type="date" class="form-control" name="visit_date" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="review_text" class="form-label">Review</label>
+            <textarea class="form-control" name="review_text" rows="4" placeholder="Share your experience..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle"></i> Submit Review
+        </button>
+        <a href="/reviews/manage" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

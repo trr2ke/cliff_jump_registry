@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-journal-text"></i> Edit Jump Log</h2>
+
+    <form id="jumpLogForm" method="POST" action="/jumplogs/manage?action=update&pkval={{ obj.data[0].log_id }}">
+        {% if obj.errors|length > 0 %}
+        <div class="alert alert-danger">
+            {% for error in obj.errors %}
+            <p class="error_text">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="location_id" class="form-label">Location *</label>
+            <select class="form-select" id="location_id" name="location_id" required>
+                <option value="">Select a location...</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="jump_date" class="form-label">Jump Date *</label>
+            <input type="date" class="form-control" id="jump_date" name="jump_date"
+                   value="{{ obj.data[0].jump_date }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="height_jumped" class="form-label">Height Jumped (feet)</label>
+            <input type="number" class="form-control" id="height_jumped" name="height_jumped"
+                   value="{{ obj.data[0].height_jumped if obj.data[0].height_jumped else '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="4">{{ obj.data[0].notes if obj.data[0].notes else '' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="photo_url" class="form-label">Photo URL</label>
+            <input type="text" class="form-control" id="photo_url" name="photo_url"
+                   value="{{ obj.data[0].photo_url if obj.data[0].photo_url else '' }}">
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="is_private" name="is_private"
+                   {{ 'checked' if obj.data[0].is_private else '' }}>
+            <label class="form-check-label" for="is_private">
+                <i class="bi bi-lock"></i> Make this log private
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Update Jump Log
+        </button>
+        <a href="/jumplogs/manage" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </form>
+
+    <script>
+        // Populate locations dropdown and select current value
+        const currentLocationId = {{ obj.data[0].location_id }};
+        fetch('/api/locations')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('location_id');
+                data.features.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.properties.location_id;
+                    option.textContent = feature.properties.name;
+                    if (feature.properties.location_id === currentLocationId) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            });
+    </script>
+</div>
+{% endblock %}

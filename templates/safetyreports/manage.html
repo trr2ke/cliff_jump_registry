@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-pencil"></i> Edit Safety Report</h2>
+
+    <form method="POST" action="/safetyreports/manage?action=update&pkval={{ obj.data[0].report_id }}">
+        {% if obj.errors|length > 0 %}
+        <div class="alert alert-danger">
+            {% for error in obj.errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">Report Date *</label>
+            <input type="date" class="form-control" name="report_date" value="{{ obj.data[0].report_date }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Is it safe? *</label>
+            <select class="form-select" name="is_safe" required>
+                <option value="1" {{ 'selected' if obj.data[0].is_safe else '' }}>✓ Safe</option>
+                <option value="0" {{ 'selected' if not obj.data[0].is_safe else '' }}>✗ Unsafe</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Conditions *</label>
+            <textarea class="form-control" name="conditions" rows="3" required>{{ obj.data[0].conditions }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Water Depth (inches)</label>
+            <input type="number" class="form-control" name="water_depth" value="{{ obj.data[0].water_depth if obj.data[0].water_depth else '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Water Temperature (°F)</label>
+            <input type="number" class="form-control" name="water_temp" value="{{ obj.data[0].water_temp if obj.data[0].water_temp else '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Hazards</label>
+            <textarea class="form-control" name="hazards" rows="2">{{ obj.data[0].hazards if obj.data[0].hazards else '' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Photo URL</label>
+            <input type="text" class="form-control" name="photo_url" value="{{ obj.data[0].photo_url if obj.data[0].photo_url else '' }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Report</button>
+        <a href="/safetyreports/manage" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

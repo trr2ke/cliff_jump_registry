@@ -77,9 +77,9 @@ class jumppoint(baseObject):
         if error:
             self.errors.append(error)
 
-        # Auto-set fields
-        self.data[0]['submission_timestamp'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.data[0]['verified'] = 0  # 0 = FALSE in MySQL TINYINT
+        # Auto-set flagging defaults
+        if 'is_flagged' not in self.data[0]:
+            self.data[0]['is_flagged'] = 0
 
         return len(self.errors) == 0
 
