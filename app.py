@@ -16,9 +16,7 @@ Author: Theodore Russell
 License: MIT
 """
 
-from flask import Flask
-from flask import render_template
-from flask import request,session, redirect, url_for, send_from_directory,make_response
+from flask import Flask, render_template, request, session, redirect, url_for, send_from_directory, make_response, jsonify
 from flask_session import Session
 from datetime import timedelta
 from user import user
@@ -27,95 +25,167 @@ from jumppoint import jumppoint
 from jumplog import jumplog
 from review import review
 from safetyreport import safetyreport
+from flag import flag
 import time
 import yaml
 from pathlib import Path
 
-# Initialize Flask application
-app = Flask(__name__,static_url_path='')
+# Initialize Flask application with custom static URL path
+app = Flask(__name__, static_url_path='')
 
+# Flask session configuration
 app.config['SECRET_KEY'] = 'sdfvbgfdjeR5y5r'
 app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)
+app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in filesystem (flask_session directory)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)  # Sessions expire after 5 hours of inactivity
+
+# Initialize Flask-Session extension
 sess = Session()
 sess.init_app(app)
 
 def create_guest_session():
-    """Create a guest session with default guest user"""
+    """
+    Create a guest session with default guest user credentials.
+
+    This allows unauthenticated users to browse the site with limited permissions.
+    Guest users can view locations and data but cannot create or modify content.
+    """
     session['user'] = {
         'user_id': 0,
         'username': 'Guest',
         'email': 'guest@example.com',
         'user_type': 'guest'
     }
-    session['active'] = time.time()
+    session['active'] = time.time()  # Track last activity time for session timeout
 
 @app.route('/')
 def home():
-    # Auto-login as guest if not already logged in
+    """
+    Home route - Entry point for the application.
+
+    Automatically creates a guest session if user is not logged in,
+    then redirects to the main dashboard.
+    """
     if 'user' not in session or session.get('user') is None:
         create_guest_session()
     return redirect('/main')
 
 @app.context_processor
 def inject_user():
+    """
+    Context processor to make current user data available in all templates.
+
+    Returns:
+        dict: Dictionary with 'me' key containing current user session data
+    """
     return dict(me=session.get('user'))
 
 
-@app.route('/login',methods = ['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    un = request.form.get('name')
+    """
+    Handle user login authentication.
+
+    GET: Display login form
+    POST: Process login credentials and create authenticated session
+
+    Returns:
+        On successful login: Redirect to main dashboard
+        On failed login: Login page with error message
+    """
+    un = request.form.get('name')  # Username or email
     pw = request.form.get('password')
-    
+
     if un is not None and pw is not None:
         u = user()
-        if u.tryLogin(un,pw):
-            session['user'] = u.data[0]
-            session['active'] = time.time()
+        # Attempt login with username/email and password
+        if u.tryLogin(un, pw):
+            session['user'] = u.data[0]  # Store user data in session
+            session['active'] = time.time()  # Track session activity
             return redirect('main')
         else:
             return render_template('login.html', title='Login', msg='Incorrect username or password.')
+
+    # Display login form for GET requests
     m = 'Welcome back'
     return render_template('login.html', title='Login', msg=m)
-@app.route('/logout',methods = ['GET','POST'])
+
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
+    """
+    Handle user logout.
+
+    Clears the current user session and redirects to home,
+    which will automatically create a new guest session.
+    """
     if session.get('user') is not None:
         del session['user']
         del session['active']
     # Redirect to home, which will auto-login as guest
     return redirect('/')
 
-@app.route('/register',methods = ['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Handle new user registration.
+
+    GET: Display registration form
+    POST: Process registration data and create new user account
+
+    Returns:
+        On successful registration: Login page with success message
+        On validation errors: Registration form with error messages
+    """
     o = user()
     action = request.args.get('action')
 
     if action is not None and action == 'insert':
+        # Collect registration form data
         d = {}
         d['username'] = request.form.get('username')
         d['email'] = request.form.get('email')
-        d['user_type'] = 'registered'  # Default to registered for new users
+        d['user_type'] = 'registered'  # New users default to 'registered' role
         d['password'] = request.form.get('password')
         d['password2'] = request.form.get('password2')
         o.set(d)
+
+        # Validate and insert new user
         if o.verify_new():
             o.insert()
             return render_template('login.html', title='Login', msg='Registration successful! Please log in.')
         else:
-            return render_template('register.html',obj = o)
+            return render_template('register.html', obj=o)
     else:
+        # Display blank registration form
         o.createBlank()
-        return render_template('register.html',obj = o)
+        return render_template('register.html', obj=o)
 
-@app.route('/users/manage',methods=['GET','POST'])
+@app.route('/users/manage', methods=['GET', 'POST'])
 def manage_user():
+    """
+    Admin-only route for managing users (CRUD operations).
+
+    Supports:
+    - LIST: Display all users (no pkval)
+    - CREATE: Add new user (pkval='new', action='insert')
+    - READ: View single user (pkval=ID)
+    - UPDATE: Edit user (pkval=ID, action='update')
+    - DELETE: Remove user (pkval=ID, action='delete')
+
+    Args (query params):
+        action: CRUD operation ('insert', 'update', 'delete')
+        pkval: Primary key value or 'new' for create
+    """
     o = user()
     action = request.args.get('action')
     pkval = request.args.get('pkval')
-    if action is not None and action == 'delete': #action=delete&pkval=123
+
+    # DELETE operation
+    if action is not None and action == 'delete':
         o.deleteById(pkval)
-        return render_template('ok_dialog.html',msg= f"Record ID {pkval} Deleted.")
+        return render_template('ok_dialog.html', msg=f"Record ID {pkval} Deleted.")
+
+    # INSERT operation - Create new user
     if action is not None and action == 'insert':
         d = {}
         d['username'] = request.form.get('username')
@@ -124,11 +194,14 @@ def manage_user():
         d['password'] = request.form.get('password')
         d['password2'] = request.form.get('password2')
         o.set(d)
+
         if o.verify_new():
             o.insert()
-            return render_template('ok_dialog.html',msg= f"User {o.data[0][o.pk]} added.")
+            return render_template('ok_dialog.html', msg=f"User {o.data[0][o.pk]} added.")
         else:
-            return render_template('users/add.html',obj = o)
+            return render_template('users/add.html', obj=o)
+
+    # UPDATE operation - Edit existing user
     if action is not None and action == 'update':
         o.getById(pkval)
         o.data[0]['username'] = request.form.get('username')
@@ -136,21 +209,27 @@ def manage_user():
         o.data[0]['user_type'] = request.form.get('user_type')
         o.data[0]['password'] = request.form.get('password')
         o.data[0]['password2'] = request.form.get('password2')
+
         if o.verify_update():
             o.update()
-            return render_template('ok_dialog.html',msg= "User updated. ")
+            return render_template('ok_dialog.html', msg="User updated. ")
         else:
-            return render_template('users/manage.html',obj = o)
-    
+            return render_template('users/manage.html', obj=o)
+
+    # LIST operation - Display all users
     if pkval is None:
         o.getAll()
-        return render_template('users/list.html',obj = o)
+        return render_template('users/list.html', obj=o)
+
+    # CREATE operation - Show form for new user
     if pkval == 'new':
         o.createBlank()
-        return render_template('users/add.html',obj = o)
+        return render_template('users/add.html', obj=o)
+
+    # READ operation - Display single user for editing
     else:
         o.getById(pkval)
-        return render_template('users/manage.html',obj = o)
+        return render_template('users/manage.html', obj=o)
 
 @app.route('/locations/manage',methods=['GET','POST'])
 def manage_location():
@@ -215,57 +294,6 @@ def manage_location():
     else:
         o.getById(pkval)
         return render_template('locations/manage.html', obj=o)
-
-@app.route('/locations/flag',methods=['POST'])
-def flag_location():
-    """Flag a location for admin review"""
-    if checkSession() == False:
-        return redirect('/login')
-
-    user_type = session.get('user', {}).get('user_type', 'guest')
-    user_id = session.get('user', {}).get('user_id')
-
-    if user_type == 'guest':
-        return render_template('ok_dialog.html', msg="Please login to flag content.")
-
-    location_id = request.form.get('location_id')
-    flag_reason = request.form.get('flag_reason', 'No reason provided')
-
-    o = location()
-    o.getById(location_id)
-    if len(o.data) > 0:
-        o.data[0]['is_flagged'] = 1
-        o.data[0]['flag_reason'] = flag_reason
-        o.data[0]['flagged_by'] = user_id
-        o.data[0]['flagged_date'] = __import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        o.update()
-        return render_template('ok_dialog.html', msg="Location flagged for admin review. Thank you for helping keep our community safe!")
-    else:
-        return render_template('ok_dialog.html', msg="Location not found.")
-
-@app.route('/locations/unflag',methods=['POST'])
-def unflag_location():
-    """Unflag a location (admin only)"""
-    if checkSession() == False:
-        return redirect('/login')
-
-    user_type = session.get('user', {}).get('user_type')
-    if user_type != 'admin':
-        return render_template('ok_dialog.html', msg="Only admins can unflag content.")
-
-    location_id = request.form.get('location_id')
-
-    o = location()
-    o.getById(location_id)
-    if len(o.data) > 0:
-        o.data[0]['is_flagged'] = 0
-        o.data[0]['flag_reason'] = None
-        o.data[0]['flagged_by'] = None
-        o.data[0]['flagged_date'] = None
-        o.update()
-        return render_template('ok_dialog.html', msg="Location unflagged successfully.")
-    else:
-        return render_template('ok_dialog.html', msg="Location not found.")
 
 @app.route('/api/locations',methods=['GET'])
 def api_locations():
@@ -738,8 +766,13 @@ def admin_analytics():
     l_obj.cur.execute(f"SELECT COUNT(*) as total FROM Locations")
     analytics['total_locations'] = l_obj.cur.fetchone()['total']
 
-    l_obj.cur.execute(f"SELECT COUNT(*) as total FROM Locations WHERE is_flagged=1")
+    l_obj.cur.execute(f"SELECT COUNT(*) as total FROM Locations WHERE flag_count > 0")
     analytics['flagged_locations'] = l_obj.cur.fetchone()['total']
+
+    # Total unresolved flags across all content
+    f_obj = flag()
+    f_obj.cur.execute(f"SELECT COUNT(*) as total FROM Flags WHERE is_resolved = 0")
+    analytics['unresolved_flags'] = f_obj.cur.fetchone()['total']
 
     jp_obj.cur.execute(f"SELECT COUNT(*) as total FROM JumpPoints")
     analytics['total_jumppoints'] = jp_obj.cur.fetchone()['total']
@@ -803,13 +836,17 @@ def admin_analytics():
     """)
     analytics['recent_safetyreports'] = [dict(row) for row in sr_obj.cur]
 
-    # Flagged locations for admin review
+    # Flagged content for admin review (most flagged items)
     l_obj.cur.execute(f"""
-        SELECT l.*, u.username as flagged_by_username
+        SELECT l.location_id, l.name, l.flag_count,
+               COUNT(f.flag_id) as active_flags,
+               GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') as flagged_by_users
         FROM Locations l
-        LEFT JOIN Users u ON l.flagged_by = u.user_id
-        WHERE l.is_flagged = 1
-        ORDER BY l.flagged_date DESC
+        LEFT JOIN Flags f ON f.flaggable_type = 'location' AND f.flaggable_id = l.location_id AND f.is_resolved = 0
+        LEFT JOIN Users u ON f.user_id = u.user_id
+        WHERE l.flag_count > 0
+        GROUP BY l.location_id, l.name, l.flag_count
+        ORDER BY l.flag_count DESC
         LIMIT 10
     """)
     analytics['flagged_locations_detail'] = [dict(row) for row in l_obj.cur]
@@ -817,33 +854,232 @@ def admin_analytics():
     return render_template('admin/analytics.html', analytics=analytics)
 
 
-@app.route('/session',methods = ['GET','POST'])
-def session_test():
-    return f"{session}"
-@app.route('/main')
-def main():
+# ============================================================================
+# FLAG ROUTES - Community content moderation
+# ============================================================================
+
+@app.route('/flags/add', methods=['GET', 'POST'])
+def add_flag():
+    """
+    Submit a flag for content (location, jumppoint, review, or safety report).
+
+    GET: Display flag submission form
+    POST: Process flag submission
+
+    Query params:
+        type: Content type ('location', 'jumppoint', 'review', 'safetyreport')
+        id: Content ID
+    """
     if checkSession() == False:
         return redirect('/login')
-    # Load config for mapbox token
+
+    # Only registered and admin users can flag content
+    if session['user']['user_type'] == 'guest':
+        return render_template('ok_dialog.html', msg='You must be logged in to flag content.')
+
+    if request.method == 'POST':
+        # Process flag submission - get values from form data
+        flaggable_type = request.form.get('flaggable_type')
+        flaggable_id = request.form.get('flaggable_id')
+
+        f = flag()
+        d = {
+            'flaggable_type': flaggable_type,
+            'flaggable_id': flaggable_id,
+            'user_id': session['user']['user_id'],
+            'flag_reason': request.form.get('flag_reason'),
+            'flag_category': request.form.get('flag_category')
+        }
+        f.set(d)
+
+        if f.verify_new():
+            f.insert()
+
+            # Update flag_count for the content
+            if flaggable_type == 'location':
+                loc = location()
+                loc.cur.execute("UPDATE Locations SET flag_count = flag_count + 1 WHERE location_id = %s", [flaggable_id])
+                loc.conn.commit()
+            elif flaggable_type == 'jumppoint':
+                jp = jumppoint()
+                jp.cur.execute("UPDATE JumpPoints SET flag_count = flag_count + 1 WHERE jump_id = %s", [flaggable_id])
+                jp.conn.commit()
+
+            return render_template('ok_dialog.html', msg='Thank you! Your flag has been submitted and will be reviewed by an administrator.', continue_url='/main')
+        else:
+            return render_template('flags/add.html', obj=f, flaggable_type=flaggable_type, flaggable_id=flaggable_id, categories=f.categories)
+
+    # Display flag form (GET request) - get values from URL query parameters
+    flaggable_type = request.args.get('flaggable_type')
+    flaggable_id = request.args.get('flaggable_id')
+
+    f = flag()
+    f.createBlank()
+    f.data[0]['flaggable_type'] = flaggable_type
+    f.data[0]['flaggable_id'] = flaggable_id
+
+    # Get content name for display
+    content_name = ''
+    if flaggable_type == 'location':
+        loc = location()
+        loc.getById(flaggable_id)
+        if len(loc.data) > 0:
+            content_name = loc.data[0]['name']
+    elif flaggable_type == 'jumppoint':
+        jp = jumppoint()
+        jp.getById(flaggable_id)
+        if len(jp.data) > 0:
+            content_name = jp.data[0]['name']
+
+    return render_template('flags/add.html', obj=f, flaggable_type=flaggable_type, flaggable_id=flaggable_id, content_name=content_name, categories=f.categories)
+
+
+@app.route('/flags/view')
+def view_flags():
+    """
+    View all flags for a specific piece of content.
+
+    Query params:
+        type: Content type
+        id: Content ID
+    """
+    if checkSession() == False:
+        return redirect('/login')
+
+    flaggable_type = request.args.get('flaggable_type')
+    flaggable_id = request.args.get('flaggable_id')
+
+    f = flag()
+    # Admins can see resolved flags, others only see active flags
+    include_resolved = (session['user']['user_type'] == 'admin')
+    flags = f.get_by_content(flaggable_type, flaggable_id, include_resolved)
+
+    return render_template('flags/list.html', obj=f, flags=flags, flaggable_type=flaggable_type, flaggable_id=flaggable_id)
+
+
+@app.route('/admin/flags')
+def admin_flags():
+    """
+    Admin interface for reviewing all unresolved flags.
+
+    Displays all flagged content organized by type and flag count.
+    """
+    if checkSession() == False:
+        return redirect('/login')
+
+    # Only admins can access this page
+    if session['user']['user_type'] != 'admin':
+        return render_template('ok_dialog.html', msg='Access denied. Admin privileges required.')
+
+    f = flag()
+    flags = f.get_unresolved_flags(limit=100)
+
+    return render_template('admin/flags.html', obj=f, flags=flags)
+
+
+@app.route('/flags/resolve', methods=['POST'])
+def resolve_flag():
+    """
+    Admin route to resolve a flag.
+
+    POST params:
+        flag_id: ID of flag to resolve
+        resolution_notes: Admin notes about the resolution
+        action: 'resolve_only' or 'resolve_and_delete'
+    """
+    if checkSession() == False:
+        return redirect('/login')
+
+    # Only admins can resolve flags
+    if session['user']['user_type'] != 'admin':
+        return render_template('ok_dialog.html', msg='Access denied. Admin privileges required.')
+
+    flag_id = request.form.get('flag_id')
+    resolution_notes = request.form.get('resolution_notes', '')
+    delete_content = request.form.get('delete_content') == '1'
+
+    f = flag()
+    f.getById(flag_id)
+
+    if len(f.data) == 0:
+        return jsonify({'status': 'error', 'message': 'Flag not found.'})
+
+    flaggable_type = f.data[0]['flaggable_type']
+    flaggable_id = f.data[0]['flaggable_id']
+
+    # Resolve the flag
+    if f.resolve_flag(flag_id, session['user']['user_id'], resolution_notes):
+        # Decrement flag_count for the content
+        if flaggable_type == 'location':
+            loc = location()
+            loc.cur.execute("UPDATE Locations SET flag_count = GREATEST(flag_count - 1, 0) WHERE location_id = %s", [flaggable_id])
+            loc.conn.commit()
+        elif flaggable_type == 'jumppoint':
+            jp = jumppoint()
+            jp.cur.execute("UPDATE JumpPoints SET flag_count = GREATEST(flag_count - 1, 0) WHERE jump_id = %s", [flaggable_id])
+            jp.conn.commit()
+
+        # If admin chose to delete the content as well
+        if delete_content:
+            if flaggable_type == 'location':
+                loc = location()
+                loc.deleteById(flaggable_id)
+            elif flaggable_type == 'jumppoint':
+                jp = jumppoint()
+                jp.deleteById(flaggable_id)
+
+            return jsonify({'status': 'success', 'message': 'Flag resolved and content deleted.'})
+
+        return jsonify({'status': 'success', 'message': 'Flag resolved successfully.'})
+    else:
+        return jsonify({'status': 'error', 'message': f'Error resolving flag: {", ".join(f.errors)}'})
+
+
+@app.route('/session', methods=['GET', 'POST'])
+def session_test():
+    """Development/debugging route to display current session data."""
+    return f"{session}"
+
+@app.route('/main')
+def main():
+    """
+    Main dashboard route displaying the interactive map of cliff jump locations.
+
+    Loads Mapbox API token from config and renders the main page with map interface.
+    """
+    if checkSession() == False:
+        return redirect('/login')
+
+    # Load Mapbox token from configuration file
     config = yaml.safe_load(Path('config.yml').read_text())
     mapbox_token = config['mapbox']['token']
     return render_template('main.html', title='Main menu', mapbox_token=mapbox_token)
-# endpoint route for static files
+
 @app.route('/static/<path:path>')
 def send_static(path):
+    """Serve static files (CSS, JS, images) from the static directory."""
     return send_from_directory('static', path)
 
-#standalone function to be called when we need to check if a user is logged in.
 def checkSession():
+    """
+    Validate user session and handle session timeout.
+
+    Checks if the user has an active session and if it has timed out (500 seconds of inactivity).
+    If session is expired or doesn't exist, automatically creates a guest session.
+
+    Returns:
+        bool: Always returns True (maintains guest session as fallback)
+    """
     if 'active' in session.keys():
         timeSinceAct = time.time() - session['active']
+
+        # Check if session has timed out (500 seconds = ~8.3 minutes)
         if timeSinceAct > 500:
             session['msg'] = 'Your session has timed out.'
-            # Create guest session instead of failing
-            create_guest_session()
+            create_guest_session()  # Convert to guest session
             return True
         else:
-            session['active'] = time.time()
+            session['active'] = time.time()  # Update last activity timestamp
             return True
     else:
         # No session exists - auto-create guest session
@@ -852,4 +1088,5 @@ def checkSession():
 
 
 if __name__ == '__main__':
-   app.run(host='0.0.0.0',debug=True)   
+    # Run Flask development server on all network interfaces
+    app.run(host='0.0.0.0', debug=True)   

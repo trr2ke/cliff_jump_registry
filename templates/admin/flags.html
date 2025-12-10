@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-shield-exclamation"></i> Admin: Flag Management</h2>
+    <p class="text-muted">Review and resolve flagged content from the community.</p>
+
+    {% if flags|length == 0 %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i> No unresolved flags! All content has been reviewed.
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> {{ flags|length }} flag(s) pending review.
+    </div>
+
+    <div class="list-group">
+        {% for flag in flags %}
+        <div class="list-group-item border-warning">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">
+                    <span class="badge bg-primary">{{ flag.flaggable_type|upper }}</span>
+                    <span class="badge bg-warning">{{ flag.flag_category|title }}</span>
+                    <a href="#" class="text-decoration-none">{{ flag.flaggable_type|title }} #{{ flag.flaggable_id }}</a>
+                </h5>
+                <small>{{ flag.flag_date }}</small>
+            </div>
+            <p class="mb-2"><strong>Reason:</strong> {{ flag.flag_reason }}</p>
+            <small class="text-muted">Flagged by: User #{{ flag.user_id }}</small>
+
+            <div class="mt-3">
+                <button class="btn btn-sm btn-success" onclick="resolveFlag({{ flag.flag_id }}, false)">
+                    <i class="bi bi-check-circle"></i> Mark as Resolved (Keep Content)
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="resolveFlag({{ flag.flag_id }}, true)">
+                    <i class="bi bi-trash"></i> Resolve & Delete Content
+                </button>
+            </div>
+
+            <div id="resolution-form-{{ flag.flag_id }}" class="mt-3" style="display: none;">
+                <form onsubmit="submitResolution(event, {{ flag.flag_id }})">
+                    <div class="mb-2">
+                        <label class="form-label">Resolution Notes (optional)</label>
+                        <textarea class="form-control" id="resolution-notes-{{ flag.flag_id }}" rows="2" placeholder="Add notes about your decision..."></textarea>
+                    </div>
+                    <input type="hidden" id="delete-content-{{ flag.flag_id }}" value="false">
+                    <button type="submit" class="btn btn-primary btn-sm">Confirm Resolution</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelResolution({{ flag.flag_id }})">Cancel</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="/admin/analytics" class="btn btn-secondary">Back to Analytics</a>
+        <a href="/main" class="btn btn-secondary">Back to Map</a>
+    </div>
+</div>
+
+<script>
+function resolveFlag(flagId, deleteContent) {
+    document.getElementById('delete-content-' + flagId).value = deleteContent ? 'true' : 'false';
+    document.getElementById('resolution-form-' + flagId).style.display = 'block';
+}
+
+function cancelResolution(flagId) {
+    document.getElementById('resolution-form-' + flagId).style.display = 'none';
+}
+
+function submitResolution(event, flagId) {
+    event.preventDefault();
+
+    const resolutionNotes = document.getElementById('resolution-notes-' + flagId).value;
+    const deleteContent = document.getElementById('delete-content-' + flagId).value === 'true';
+
+    fetch('/flags/resolve', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'flag_id': flagId,
+            'resolution_notes': resolutionNotes,
+            'delete_content': deleteContent ? '1' : '0'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Flag resolved successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error resolving flag: ' + error);
+    });
+}
+</script>
+{% endblock %}

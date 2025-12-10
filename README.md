@@ -1,341 +1,611 @@
 # Cliff Jump Registry
 
-A community-driven web application for documenting and safely sharing cliff jumping locations.
+**Project Team:** Theodore Russell
+**Course:** Database Design & Management
+**Institution:** Clarkson University
+
+---
 
 ## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Business Assumptions](#business-assumptions)
+- [Project Overview](#project-overview)
+- [Primary Use Cases](#primary-use-cases)
+- [User Roles & Credentials](#user-roles--credentials)
 - [System Architecture](#system-architecture)
 - [Database Schema](#database-schema)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [User Roles & Permissions](#user-roles--permissions)
+- [SQL Query Examples](#sql-query-examples)
+- [Installation & Setup](#installation--setup)
 - [API Endpoints](#api-endpoints)
-- [Security Considerations](#security-considerations)
-- [Future Enhancements](#future-enhancements)
+- [Testing](#testing)
 
-## Overview
+---
 
-The Cliff Jump Registry is a Flask-based web application that enables the cliff jumping community to collaboratively document, rate, and share information about jumping locations worldwide. The system emphasizes safety through community reporting, content flagging, and real-time condition updates.
+## Project Overview
 
-**Key Goals:**
-- Build a comprehensive, accurate database of cliff jumping locations
-- Enhance safety through community-driven condition reporting
-- Create accountability through user roles and community moderation
-- Enable jumpers to track their personal adventures
-- Foster a responsible cliff jumping community
+### Application Purpose
 
-## Features
+The **Cliff Jump Registry** is a community-driven web application designed to document, share, and safely navigate cliff jumping locations worldwide. In the cliff jumping community, information about locations, safety conditions, and jump specifications is typically shared informally through word-of-mouth or social media, leading to fragmented, outdated, or inaccurate information. This application formalizes that knowledge sharing by providing a centralized, verified platform where jumpers can discover locations, report real-time safety conditions, and contribute to a comprehensive database of jumping spots.
 
-### Core Features
-- **Interactive Map**: Mapbox-powered map displaying all registered locations
-- **Location Management**: Add, edit, and view cliff jumping areas with GPS coordinates
-- **Jump Points**: Document specific jump spots within locations (height, difficulty, position, dangers)
-- **User Authentication**: Secure login system with role-based access control
-- **Auto-Guest Mode**: Seamless browsing experience for non-registered users
+The application addresses critical safety concerns by enabling community members to report current water conditions, hazards, and accessibility issues. Through a three-tier user role system (Guest, Registered, Admin), the platform balances open access to safety information with controlled content contribution and moderation. Users can maintain personal jump logs, write detailed reviews with multi-dimensional ratings, and flag inaccurate or dangerous content for administrative review.
 
-### Community Features
-- **Jump Log Diary**: Personal logbook to track jumps, heights, dates, and notes
-- **Reviews & Ratings**: Three-dimensional rating system (overall, safety, accessibility)
-- **Safety Reports**: Real-time community reporting of water conditions, hazards, depth
-- **Community Flagging**: Users can flag inappropriate or inaccurate content for admin review
+Built on Flask with a MySQL database and Mapbox mapping integration, the Cliff Jump Registry demonstrates modern web application architecture with RESTful API design, session-based authentication, and responsive design principles. The application emphasizes data integrity through server-side validation, parameterized SQL queries, and role-based access control, while providing both transactional operations for content management and analytical capabilities for platform insights.
 
-### Safety Features
-- **Hazard Tracking**: Documentation of dangers at each jump point
-- **Safety Reporting**: Community members report current conditions (water depth, temperature, hazards)
-- **Admin Moderation**: Flagged content is reviewed by administrators
-- **Unsafe Condition Warnings**: Locations with unsafe safety reports display prominent warnings
+### Key Features
+- Interactive Mapbox-powered map displaying cliff jumping locations globally
+- Comprehensive location database with GPS coordinates, descriptions, and safety information
+- Jump point documentation with height, difficulty, position, and danger warnings
+- Personal jump log diary with public/private visibility controls
+- Multi-dimensional review system (overall, safety, accessibility ratings)
+- Real-time safety condition reporting with hazard documentation
+- Community-driven content flagging and admin moderation system
+- Analytics dashboard for platform insights and content management
 
-## Business Assumptions
+---
 
-### 1. User Engagement Model
-**Assumption**: Users will contribute content altruistically to support the community.
+## Primary Use Cases
 
-**Rationale**: Cliff jumping is a tight-knit community where safety and access information is traditionally shared informally. By formalizing this sharing, we provide value to participants.
+### 1. Discovering New Cliff Jumping Locations
+**Actor:** Guest or Registered User
+**Goal:** Find cliff jumping locations in a specific area or with certain characteristics
 
-**Implications**:
-- No monetization model required initially
-- Quality control through verification workflow is essential
-- Trust building through user reputation (trust_score) will be important
-- Guest access encourages exploration before registration
+**Flow:**
+1. User accesses the interactive map interface
+2. User browses locations by geographic region or searches by name
+3. User clicks on a location marker to view detailed information
+4. System displays location description, jump points, reviews, and safety reports
+5. User reviews community ratings and recent safety conditions
+6. User decides whether to visit the location based on aggregated information
 
-### 2. Safety Liability
-**Assumption**: The platform serves as an informational resource only and does not assume liability for user safety.
+### 2. Contributing Location and Safety Information
+**Actor:** Registered User
+**Goal:** Add a new cliff jumping location and document safety conditions
 
-**Implications**:
-- Clear disclaimers needed on all location pages
-- Users acknowledge risks when registering
-- Safety reports are community opinions, not professional assessments
-- Status warnings (dangerous/closed) must be prominent
-- No guarantees about accuracy or timeliness of information
+**Flow:**
+1. User logs into registered account
+2. User clicks "Add New Location" and pins GPS coordinates on map
+3. User enters location details (name, description, type, accessibility)
+4. User adds specific jump points with heights, difficulty ratings, and dangers
+5. System validates and saves location to database
+6. User submits current safety report with water depth, temperature, hazards
+7. Other users can now view and benefit from this contribution
 
-**Recommended**: Consult legal counsel for appropriate disclaimers and terms of service.
+### 3. Maintaining Personal Jump History
+**Actor:** Registered User
+**Goal:** Track personal cliff jumping achievements and experiences
 
-### 3. Content Moderation
-**Assumption**: Community self-moderation through flagging is sufficient for content quality control.
+**Flow:**
+1. User navigates to "My Jump Log"
+2. User creates new log entry for a recent jump
+3. User selects location, enters jump date, height jumped, and personal notes
+4. User optionally adds photos and sets visibility (public/private)
+5. System saves jump log entry
+6. User can view statistics and history of all logged jumps
 
-**Rationale**: Registered users can immediately add content without bottlenecks. Community members flag inappropriate or inaccurate content for admin review.
+### 4. Moderating Community Content
+**Actor:** Admin
+**Goal:** Review flagged content and maintain platform quality
 
-**Implications**:
-- All registered users can add locations immediately (no approval workflow)
-- Community flagging system allows users to report problematic content
-- Admin role reviews and moderates flagged content
-- Reviews and safety reports provide community-driven quality indicators
+**Flow:**
+1. Admin accesses admin analytics dashboard
+2. System displays unresolved flags with details and user comments
+3. Admin reviews flagged location or jump point
+4. Admin verifies accuracy by cross-referencing other sources
+5. Admin either resolves flag (keeping content) or deletes inaccurate content
+6. System updates flag count and notifies relevant parties
+7. Platform maintains data integrity and user trust
 
-**Advantages**: Faster content addition, no submission bottlenecks, community-driven moderation.
+### 5. Analyzing Platform Engagement and Safety Trends
+**Actor:** Admin
+**Goal:** Monitor platform health and identify safety concerns
 
-### 4. Geographic Coverage
-**Assumption**: Initial focus on North American locations with global expansion potential.
+**Flow:**
+1. Admin accesses analytics dashboard
+2. System displays metrics: total users, locations, reviews, safety reports
+3. Admin reviews most-flagged content and unsafe condition reports
+4. Admin identifies trending safety issues or popular locations
+5. Admin uses insights to prioritize moderation and community outreach
+6. Platform improves through data-driven decision making
 
-**Rationale**: Developer familiarity and testing access concentrated in North America (Vermont-focused initially).
+---
 
-**Implications**:
-- Database schema supports global coordinates
-- No geographic restrictions in code
-- Initial marketing/outreach focused regionally
-- International expansion requires minimal technical changes
+## User Roles & Credentials
 
-### 5. Data Accuracy
-**Assumption**: Community verification and multiple reports will converge on accurate information.
+### User Role Architecture
 
-**Rationale**: Similar to Wikipedia's model, errors will be corrected by knowledgeable community members over time.
+The application implements a three-tier user role system with hierarchical permissions:
 
-**Implications**:
-- Verification workflow critical for quality
-- Multiple safety reports better than single reports
-- Edit history/verification history provides transparency
-- Initial locations may have accuracy issues until verified
+| Role | Purpose | Permissions |
+|------|---------|------------|
+| **Guest** | Browse and view content without registration | View locations, jump points, reviews, safety reports; View map; Read-only access |
+| **Registered** | Active community contributor | All Guest permissions; Add/edit locations and jump points; Submit reviews and ratings; Report safety conditions; Create and manage jump logs; Flag content for review |
+| **Admin** | Platform moderation and management | All Registered permissions; Review and resolve flags; Delete any content; Manage user accounts; Access analytics dashboard; Override all permissions |
 
-**Metrics to Track**: Verification rate, time to verification, accuracy complaints
+### Test User Credentials
 
-### 6. Seasonal Variations
-**Assumption**: Safety conditions vary dramatically by season and weather.
+Use these credentials to test different user role functionalities:
 
-**Rationale**: Water levels, temperatures, and accessibility change throughout the year.
+| Role | Username | Password | Purpose |
+|------|----------|----------|---------|
+| **Guest** | `guest` | *(auto-login)* | Test read-only browsing without registration |
+| **Registered User** | `test_user` | `jumper2024` | Test content creation and community features |
+| **Registered User** | `safety_reporter` | `safe123` | Test safety reporting and review submission |
+| **Admin** | `admin` | `admin123` | Test moderation, flag management, and analytics |
 
-**Implications**:
-- Safety reports include date/timestamp prominently
-- Encourage frequent reporting of conditions
-- Consider weather API integration (future enhancement)
-- Location descriptions should note seasonal considerations
+**Important Notes:**
+- Guest accounts are automatically created when users visit without logging in
+- Registered users must create accounts through the `/register` endpoint
+- Admin accounts can only be created by existing admins or through direct database manipulation
+- All passwords should be changed from defaults in production environments
 
-### 7. Privacy & Social Features
-**Assumption**: Users want to track personal jumps but may not want to share all activity publicly.
-
-**Rationale**: Personal achievement tracking is motivating, but not all jumpers want public profiles.
-
-**Implications**:
-- Jump logs have private/public toggle
-- Reviews are public by default (for community value)
-- No social following/friend features initially
-- User profiles minimal (username, type, trust score)
-
-### 8. Mobile Usage
-**Assumption**: Majority of users will access the site on mobile devices at jump locations.
-
-**Implications**:
-- Responsive Bootstrap design essential
-- Map interactions must work on touch screens
-- Forms optimized for mobile input
-- GPS auto-fill for location submission (future enhancement)
-- Offline mode consideration for remote locations (future enhancement)
-
-### 9. Revenue Model
-**Assumption**: Platform will operate without direct monetization initially.
-
-**Potential Future Revenue Streams** (if needed):
-- Sponsorships from outdoor recreation brands
-- Premium features (detailed analytics, enhanced profiles)
-- Gear marketplace/affiliate links
-- Event promotion for jumping competitions
-
-**Current Decision**: Focus on growth and community value before monetization.
-
-### 10. Competition & Alternatives
-**Assumption**: No dominant competitor exists in the cliff jumping niche.
-
-**Rationale**: General platforms (Google Maps, AllTrails) don't capture cliff jumping-specific data (heights, safety conditions, jump points).
-
-**Differentiation**:
-- Specialized data model (heights, difficulties, dangers)
-- Safety reporting system unique to cliff jumping
-- Community verification specific to the activity
-- Jump log diary for personal tracking
-
-**Risk**: A larger outdoor recreation platform could add cliff jumping features. Mitigation: Build strong community and specialized features first.
+---
 
 ## System Architecture
 
 ### Technology Stack
-- **Backend**: Python 3.x with Flask web framework
-- **Database**: MySQL (hosted on mysql.clarksonmsda.org)
-- **Frontend**: HTML5, Bootstrap 5, Jinja2 templating
-- **Mapping**: Mapbox GL JS for interactive maps
-- **Session Management**: Flask-Session with filesystem storage
-- **Authentication**: Password hashing with MD5 (⚠️ **Note**: Upgrade to bcrypt recommended)
+- **Backend Framework:** Flask 3.0+ (Python 3.8+)
+- **Database:** MySQL 5.7+ (hosted on mysql.clarksonmsda.org)
+- **Frontend:** HTML5, Bootstrap 5.3, Jinja2 templating
+- **Mapping:** Mapbox GL JS v2.15
+- **Session Management:** Flask-Session with filesystem storage
+- **Authentication:** Password hashing with hashlib MD5
 
-### Application Structure
+### MVC Architecture Pattern
+
 ```
-cliff_jump_registry/
-├── app.py                      # Main Flask application
-├── baseObject.py               # Base class for database models
-├── user.py                     # User model and authentication
-├── location.py                 # Location model
-├── jumppoint.py                # Jump point model
-├── jumplog.py                  # Jump log diary model
-├── review.py                   # Review/rating model
-├── safetyreport.py             # Safety condition report model
-├── locationverification.py     # Verification workflow model
-├── config.yml                  # Configuration (database, API keys)
-├── config.example.yml          # Configuration template
-├── requirements.txt            # Python dependencies
-├── templates/                  # HTML templates
-│   ├── base.html
-│   ├── main.html
-│   ├── login.html
-│   ├── register.html
-│   ├── locations/
-│   ├── jumppoints/
-│   ├── jumplogs/
-│   ├── reviews/
-│   ├── safetyreports/
-│   ├── verifications/
-│   └── users/
-└── static/                     # Static assets (CSS, JS, images)
+Application Layer:
+├── Models (Python Classes)
+│   ├── user.py - User authentication and account management
+│   ├── location.py - Cliff jumping location data
+│   ├── jumppoint.py - Specific jump spots within locations
+│   ├── jumplog.py - Personal jump diary entries
+│   ├── review.py - Location reviews and ratings
+│   ├── safetyreport.py - Real-time safety conditions
+│   └── flag.py - Content moderation flags
+│
+├── Views (Jinja2 Templates)
+│   ├── base.html - Base layout template
+│   ├── main.html - Interactive map interface
+│   ├── locations/ - Location management templates
+│   ├── jumppoints/ - Jump point templates
+│   ├── jumplogs/ - Jump log diary templates
+│   ├── reviews/ - Review submission templates
+│   ├── safetyreports/ - Safety reporting templates
+│   ├── flags/ - Content flagging templates
+│   ├── admin/ - Admin dashboard templates
+│   └── users/ - User management templates
+│
+└── Controllers (Flask Routes - app.py)
+    ├── Authentication Routes (/login, /register, /logout)
+    ├── Location Routes (/locations/*)
+    ├── Jump Point Routes (/jumppoints/*)
+    ├── Jump Log Routes (/jumplogs/*)
+    ├── Review Routes (/reviews/*)
+    ├── Safety Report Routes (/safetyreports/*)
+    ├── Flag Routes (/flags/*)
+    ├── Admin Routes (/admin/*)
+    ├── User Routes (/users/*)
+    └── API Routes (/api/*)
 ```
 
-### Design Patterns
-- **MVC Pattern**: Models (Python classes), Views (Jinja templates), Controllers (Flask routes)
-- **Base Class Inheritance**: All models extend baseObject for common CRUD operations
-- **Validation Helpers**: Each model has private `_validate_*()` methods for reusable validation
-- **Session Management**: Guest auto-login provides seamless browsing
+### Base Object Design Pattern
+
+All models inherit from `baseObject.py`, which provides common CRUD operations:
+- `setup()` - Database connection initialization
+- `getAll()` - Retrieve all records
+- `getById(id)` - Retrieve single record by primary key
+- `insert()` - Create new record
+- `update()` - Modify existing record
+- `deleteById(id)` - Remove record
+- `verify_new()` - Validate data before insertion
+- `verify_update()` - Validate data before update
+
+This inheritance pattern ensures consistent database interaction patterns and reduces code duplication across models.
+
+---
 
 ## Database Schema
 
-### Tables
+### Entity-Relationship Overview
+
+The database consists of 7 primary tables with relationships modeling a community platform:
+
+```
+Users (1) ──submits──> (N) Locations
+Users (1) ──submits──> (N) JumpPoints
+Users (1) ──creates──> (N) JumpLogs
+Users (1) ──writes───> (N) Reviews
+Users (1) ──submits──> (N) SafetyReports
+Users (1) ──submits──> (N) Flags
+Users (1) ──resolves─> (N) Flags
+
+Locations (1) ──contains─> (N) JumpPoints
+Locations (1) ──has─────> (N) Reviews
+Locations (1) ──has─────> (N) SafetyReports
+Locations (1) ──logged_at> (N) JumpLogs
+
+Flags (N) ──references─> (1) Location | JumpPoint | Review | SafetyReport
+```
+
+### Table Definitions
 
 #### Users
-Stores user accounts and permissions.
-- `user_id` (PK): Auto-increment integer
-- `username`: Unique username
-- `email`: Unique email address
-- `password_hash`: Hashed password
-- `user_type`: ENUM('guest', 'registered', 'admin')
-- `trust_score`: Integer for reputation tracking
-- `created_date`: Timestamp of registration
+Stores user accounts with role-based permissions.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `user_id` | INT | PK, AUTO_INCREMENT | Unique user identifier |
+| `username` | VARCHAR(50) | UNIQUE, NOT NULL | Login username |
+| `email` | VARCHAR(100) | UNIQUE, NOT NULL | User email address |
+| `password_hash` | VARCHAR(255) | NOT NULL | Hashed password |
+| `user_type` | ENUM | NOT NULL | 'guest', 'registered', 'admin' |
+| `trust_score` | INT | DEFAULT 0 | Reputation tracking (future use) |
+| `created_date` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Account creation date |
+
+**Indexes:** PRIMARY KEY (`user_id`), UNIQUE (`username`), UNIQUE (`email`)
 
 #### Locations
-Geographic areas containing one or more jump points.
-- `location_id` (PK): Auto-increment integer
-- `name`: Location name (e.g., "Lincoln Falls")
-- `latitude`, `longitude`: GPS coordinates (DECIMAL)
-- `location_type`: ENUM('cliff_jump', 'rope_swing', 'both')
-- `submitted_by` (FK): User ID
-- `description`: TEXT
-- `is_flagged`: TINYINT(1) - Whether location has been flagged for review
-- `flag_reason`: TEXT - Reason for flagging (nullable)
-- `flagged_by` (FK): User ID who flagged (nullable)
-- `flagged_date`: DATETIME - When location was flagged (nullable)
+Geographic areas containing one or more cliff jumping spots.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `location_id` | INT | PK, AUTO_INCREMENT | Unique location identifier |
+| `name` | VARCHAR(100) | NOT NULL | Location name |
+| `latitude` | DECIMAL(10,7) | NOT NULL | GPS latitude (-90 to 90) |
+| `longitude` | DECIMAL(10,7) | NOT NULL | GPS longitude (-180 to 180) |
+| `location_type` | ENUM | NOT NULL | 'cliff_jump', 'rope_swing', 'both' |
+| `description` | TEXT | NULL | Detailed location description |
+| `submitted_by` | INT | FK → Users | User who added location |
+| `flag_count` | INT | DEFAULT 0 | Number of unresolved flags |
+
+**Indexes:** PRIMARY KEY (`location_id`), FOREIGN KEY (`submitted_by`)
 
 #### JumpPoints
-Specific jump spots within a location.
-- `jump_id` (PK): Auto-increment integer
-- `location_id` (FK): Parent location
-- `name`: Jump point name
-- `height_feet`: DECIMAL(6,2) (nullable)
-- `difficulty`: ENUM('beginner', 'intermediate', 'advanced', 'expert') (nullable)
-- `description`: TEXT
-- `dangers`: TEXT
-- `position_description`: How to find the jump spot
-- `submitted_by` (FK): User ID
-- `is_flagged`: TINYINT(1) - Whether jump point has been flagged for review
-- `flag_reason`: TEXT - Reason for flagging (nullable)
-- `flagged_by` (FK): User ID who flagged (nullable)
-- `flagged_date`: DATETIME - When jump point was flagged (nullable)
+Specific jump spots within a location with technical details.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `jump_id` | INT | PK, AUTO_INCREMENT | Unique jump point identifier |
+| `location_id` | INT | FK → Locations, NOT NULL | Parent location |
+| `name` | VARCHAR(100) | NOT NULL | Jump point name |
+| `height_feet` | DECIMAL(6,2) | NULL | Jump height in feet |
+| `difficulty` | ENUM | NULL | 'beginner', 'intermediate', 'advanced', 'expert' |
+| `description` | TEXT | NULL | Jump point description |
+| `dangers` | TEXT | NULL | Known hazards and warnings |
+| `position_description` | TEXT | NULL | How to locate the jump spot |
+| `submitted_by` | INT | FK → Users | User who added jump point |
+| `flag_count` | INT | DEFAULT 0 | Number of unresolved flags |
+
+**Indexes:** PRIMARY KEY (`jump_id`), FOREIGN KEY (`location_id`), FOREIGN KEY (`submitted_by`)
 
 #### JumpLogs
-Personal jump diary entries.
-- `log_id` (PK): Auto-increment integer
-- `user_id` (FK): User who logged the jump
-- `location_id` (FK): Where they jumped
-- `jump_date`: Date of jump
-- `jump_timestamp`: When log was created
-- `height_jumped`: Height in feet (INT, nullable)
-- `notes`: TEXT
-- `photo_url`: VARCHAR(255, nullable)
-- `is_private`: TINYINT(1) - public/private toggle
+Personal jump diary entries for tracking user achievements.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `log_id` | INT | PK, AUTO_INCREMENT | Unique log entry identifier |
+| `user_id` | INT | FK → Users, NOT NULL | User who logged jump |
+| `location_id` | INT | FK → Locations, NOT NULL | Where jump occurred |
+| `jump_date` | DATE | NOT NULL | Date of jump |
+| `jump_timestamp` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Log creation timestamp |
+| `height_jumped` | INT | NULL | Height jumped in feet |
+| `notes` | TEXT | NULL | Personal notes about jump |
+| `photo_url` | VARCHAR(255) | NULL | Link to jump photo |
+| `is_private` | TINYINT(1) | DEFAULT 0 | Visibility toggle (0=public, 1=private) |
+
+**Indexes:** PRIMARY KEY (`log_id`), FOREIGN KEY (`user_id`), FOREIGN KEY (`location_id`)
 
 #### Reviews
-User reviews and ratings for locations.
-- `review_id` (PK): Auto-increment integer
-- `location_id` (FK): Location being reviewed
-- `user_id` (FK): Reviewer
-- `rating`: INT (1-5) - overall rating
-- `safety_rating`: INT (1-5)
-- `access_rating`: INT (1-5)
-- `review_text`: TEXT (nullable)
-- `visit_date`: Date of visit
-- `created_date`: When review was posted
-- `review_timestamp`: Last updated
+User reviews and multi-dimensional ratings for locations.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `review_id` | INT | PK, AUTO_INCREMENT | Unique review identifier |
+| `location_id` | INT | FK → Locations, NOT NULL | Location being reviewed |
+| `user_id` | INT | FK → Users, NOT NULL | Reviewer |
+| `rating` | INT | NOT NULL, CHECK (1-5) | Overall rating |
+| `safety_rating` | INT | NOT NULL, CHECK (1-5) | Safety assessment |
+| `access_rating` | INT | NOT NULL, CHECK (1-5) | Accessibility rating |
+| `review_text` | TEXT | NULL | Written review content |
+| `visit_date` | DATE | NOT NULL | Date of visit |
+| `created_date` | DATE | NOT NULL | Review submission date |
+| `review_timestamp` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Last update timestamp |
+
+**Indexes:** PRIMARY KEY (`review_id`), FOREIGN KEY (`location_id`), FOREIGN KEY (`user_id`)
 
 #### SafetyReports
-Real-time safety condition reports.
-- `report_id` (PK): Auto-increment integer
-- `location_id` (FK): Location being reported
-- `user_id` (FK): Reporter
-- `report_date`: Date conditions observed
-- `report_timestamp`: When report was submitted
-- `water_depth`: INT (inches, nullable)
-- `water_temp`: INT (°F, nullable)
-- `conditions`: TEXT - general description
-- `hazards`: TEXT (nullable)
-- `is_safe`: TINYINT(1) - safe/unsafe flag
-- `photo_url`: VARCHAR(255, nullable)
+Real-time safety condition reports from the community.
 
-## Installation
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `report_id` | INT | PK, AUTO_INCREMENT | Unique report identifier |
+| `location_id` | INT | FK → Locations, NOT NULL | Location being reported |
+| `user_id` | INT | FK → Users, NOT NULL | Reporter |
+| `report_date` | DATE | NOT NULL | Date conditions observed |
+| `report_timestamp` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Report submission time |
+| `water_depth` | INT | NULL | Water depth in inches |
+| `water_temp` | INT | NULL | Water temperature in °F |
+| `conditions` | TEXT | NOT NULL | General condition description |
+| `hazards` | TEXT | NULL | Specific hazards observed |
+| `is_safe` | TINYINT(1) | NOT NULL | Safety flag (0=unsafe, 1=safe) |
+| `photo_url` | VARCHAR(255) | NULL | Link to condition photo |
+
+**Indexes:** PRIMARY KEY (`report_id`), FOREIGN KEY (`location_id`), FOREIGN KEY (`user_id`)
+
+#### Flags
+Content moderation system for community reporting.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `flag_id` | INT | PK, AUTO_INCREMENT | Unique flag identifier |
+| `flaggable_type` | ENUM | NOT NULL | 'location', 'jumppoint', 'review', 'safetyreport' |
+| `flaggable_id` | INT | NOT NULL | ID of flagged content |
+| `user_id` | INT | FK → Users, NOT NULL | User who submitted flag |
+| `flag_reason` | TEXT | NOT NULL | Detailed explanation |
+| `flag_category` | ENUM | NOT NULL | 'inaccurate', 'dangerous', 'inappropriate', 'spam', 'outdated', 'other' |
+| `flag_date` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Flag submission time |
+| `is_resolved` | TINYINT(1) | DEFAULT 0 | Resolution status |
+| `resolved_by` | INT | FK → Users, NULL | Admin who resolved |
+| `resolved_date` | TIMESTAMP | NULL | Resolution timestamp |
+| `resolution_notes` | TEXT | NULL | Admin resolution notes |
+
+**Indexes:** PRIMARY KEY (`flag_id`), FOREIGN KEY (`user_id`), FOREIGN KEY (`resolved_by`), INDEX (`flaggable_type`, `flaggable_id`)
+
+### Relational Diagram
+
+![ER Diagram](cliff_jumping_er_diagram.erdplus)
+
+**Key Relationships:**
+- **1:N Users → Locations:** Users submit multiple locations
+- **1:N Locations → JumpPoints:** Locations contain multiple jump points
+- **1:N Users → JumpLogs:** Users maintain personal jump diaries
+- **1:N Locations → Reviews:** Locations receive multiple reviews
+- **1:N Locations → SafetyReports:** Locations have multiple safety reports
+- **N:M Flags ↔ Content:** Polymorphic relationship allowing any content type to be flagged
+
+---
+
+## SQL Query Examples
+
+### Transactional Queries
+
+Transactional queries perform single-record operations for real-time application functionality:
+
+#### 1. User Registration and Authentication
+```sql
+-- Insert new user account
+INSERT INTO Users (username, email, password_hash, user_type, created_date)
+VALUES ('new_jumper', 'jumper@example.com', MD5('password123'), 'registered', NOW());
+
+-- Authenticate user login
+SELECT user_id, username, email, user_type, trust_score
+FROM Users
+WHERE username = 'new_jumper' AND password_hash = MD5('password123');
+```
+
+**Purpose:** Creates new user accounts and validates login credentials. Critical for access control and session management.
+
+#### 2. Add Location with Jump Point
+```sql
+-- Insert new cliff jumping location
+INSERT INTO Locations (name, latitude, longitude, location_type, description, submitted_by)
+VALUES ('Hidden Falls', 44.123456, -73.987654, 'cliff_jump',
+        'Secluded waterfall with deep pool', 15);
+
+-- Add jump point to location (assuming location_id = 25)
+INSERT INTO JumpPoints (location_id, name, height_feet, difficulty, dangers, submitted_by)
+VALUES (25, 'Main Ledge', 35.5, 'intermediate',
+        'Submerged rocks on left side', 15);
+```
+
+**Purpose:** Enables users to contribute new locations and document specific jump points with safety information.
+
+#### 3. Submit Safety Report
+```sql
+-- Report current safety conditions
+INSERT INTO SafetyReports
+(location_id, user_id, report_date, water_depth, water_temp, conditions, is_safe)
+VALUES (25, 15, '2024-06-15', 72, 68,
+        'Water level normal, visibility good', 1);
+
+-- Update location with unsafe flag if dangerous conditions reported
+UPDATE Locations
+SET is_unsafe = 1
+WHERE location_id IN (
+    SELECT location_id
+    FROM SafetyReports
+    WHERE is_safe = 0
+    AND report_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+);
+```
+
+**Purpose:** Allows community members to report real-time conditions and automatically flags locations with recent unsafe reports.
+
+### Analytical Queries
+
+Analytical queries aggregate data for insights, reporting, and administrative decision-making:
+
+#### 1. Location Popularity and Rating Analysis
+```sql
+-- Analyze most popular and highly-rated locations
+SELECT
+    l.location_id,
+    l.name,
+    COUNT(DISTINCT r.review_id) as review_count,
+    AVG(r.rating) as avg_overall_rating,
+    AVG(r.safety_rating) as avg_safety_rating,
+    AVG(r.access_rating) as avg_access_rating,
+    COUNT(DISTINCT jl.log_id) as total_jumps_logged,
+    COUNT(DISTINCT jp.jump_id) as jump_point_count
+FROM Locations l
+LEFT JOIN Reviews r ON l.location_id = r.location_id
+LEFT JOIN JumpLogs jl ON l.location_id = jl.location_id
+LEFT JOIN JumpPoints jp ON l.location_id = jp.location_id
+GROUP BY l.location_id, l.name
+HAVING review_count >= 3
+ORDER BY avg_overall_rating DESC, review_count DESC
+LIMIT 10;
+```
+
+**Purpose:** Identifies top-rated locations with sufficient reviews for reliability. Helps admins promote quality locations and users discover best spots.
+
+#### 2. User Contribution Analysis
+```sql
+-- Rank most active contributors across all content types
+SELECT
+    u.user_id,
+    u.username,
+    u.user_type,
+    COUNT(DISTINCT l.location_id) as locations_added,
+    COUNT(DISTINCT jp.jump_id) as jumppoints_added,
+    COUNT(DISTINCT r.review_id) as reviews_written,
+    COUNT(DISTINCT sr.report_id) as safety_reports,
+    COUNT(DISTINCT jl.log_id) as jumps_logged,
+    (COUNT(DISTINCT l.location_id) +
+     COUNT(DISTINCT jp.jump_id) +
+     COUNT(DISTINCT r.review_id) +
+     COUNT(DISTINCT sr.report_id)) as total_contributions
+FROM Users u
+LEFT JOIN Locations l ON u.user_id = l.submitted_by
+LEFT JOIN JumpPoints jp ON u.user_id = jp.submitted_by
+LEFT JOIN Reviews r ON u.user_id = r.user_id
+LEFT JOIN SafetyReports sr ON u.user_id = sr.user_id
+LEFT JOIN JumpLogs jl ON u.user_id = jl.user_id
+WHERE u.user_type != 'guest'
+GROUP BY u.user_id, u.username, u.user_type
+HAVING total_contributions > 0
+ORDER BY total_contributions DESC
+LIMIT 20;
+```
+
+**Purpose:** Identifies power users and community leaders. Useful for recognizing contributors, understanding engagement patterns, and targeting outreach.
+
+#### 3. Safety Risk Assessment and Flagging Analysis
+```sql
+-- Comprehensive safety and content quality report
+SELECT
+    l.location_id,
+    l.name,
+    l.flag_count,
+    COUNT(DISTINCT CASE WHEN f.is_resolved = 0 THEN f.flag_id END) as unresolved_flags,
+    COUNT(DISTINCT CASE WHEN sr.is_safe = 0 THEN sr.report_id END) as unsafe_reports,
+    COUNT(DISTINCT CASE WHEN sr.report_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                   THEN sr.report_id END) as recent_reports,
+    GROUP_CONCAT(DISTINCT f.flag_category) as flag_categories,
+    MAX(sr.report_date) as last_safety_report_date,
+    AVG(r.rating) as avg_rating
+FROM Locations l
+LEFT JOIN Flags f ON f.flaggable_type = 'location' AND f.flaggable_id = l.location_id
+LEFT JOIN SafetyReports sr ON l.location_id = sr.location_id
+LEFT JOIN Reviews r ON l.location_id = r.location_id
+WHERE l.flag_count > 0 OR
+      EXISTS (SELECT 1 FROM SafetyReports sr2
+              WHERE sr2.location_id = l.location_id
+              AND sr2.is_safe = 0
+              AND sr2.report_date >= DATE_SUB(NOW(), INTERVAL 30 DAY))
+GROUP BY l.location_id, l.name, l.flag_count
+ORDER BY unresolved_flags DESC, unsafe_reports DESC;
+```
+
+**Purpose:** Identifies locations requiring immediate admin attention due to safety concerns or quality issues. Critical for platform safety and trust.
+
+#### 4. Temporal Activity Patterns
+```sql
+-- Analyze seasonal and temporal usage patterns
+SELECT
+    YEAR(jl.jump_date) as year,
+    MONTH(jl.jump_date) as month,
+    MONTHNAME(jl.jump_date) as month_name,
+    COUNT(DISTINCT jl.log_id) as total_jumps,
+    COUNT(DISTINCT jl.user_id) as unique_users,
+    AVG(jl.height_jumped) as avg_height,
+    COUNT(DISTINCT sr.report_id) as safety_reports_submitted,
+    SUM(CASE WHEN sr.is_safe = 0 THEN 1 ELSE 0 END) as unsafe_conditions_reported
+FROM JumpLogs jl
+LEFT JOIN SafetyReports sr ON jl.location_id = sr.location_id
+    AND YEAR(jl.jump_date) = YEAR(sr.report_date)
+    AND MONTH(jl.jump_date) = MONTH(sr.report_date)
+WHERE jl.jump_date >= DATE_SUB(NOW(), INTERVAL 24 MONTH)
+GROUP BY YEAR(jl.jump_date), MONTH(jl.jump_date)
+ORDER BY year DESC, month DESC;
+```
+
+**Purpose:** Reveals seasonal patterns in cliff jumping activity and safety reporting. Helps predict high-traffic periods and safety concerns.
+
+#### 5. Content Moderation Efficiency Metrics
+```sql
+-- Admin performance and flag resolution analysis
+SELECT
+    u.user_id as admin_id,
+    u.username as admin_username,
+    COUNT(f.flag_id) as flags_resolved,
+    AVG(TIMESTAMPDIFF(HOUR, f.flag_date, f.resolved_date)) as avg_resolution_hours,
+    SUM(CASE WHEN f.resolution_notes IS NOT NULL THEN 1 ELSE 0 END) as flags_with_notes,
+    COUNT(DISTINCT f.flaggable_type) as content_types_moderated,
+    MIN(f.resolved_date) as first_resolution,
+    MAX(f.resolved_date) as latest_resolution
+FROM Users u
+INNER JOIN Flags f ON u.user_id = f.resolved_by
+WHERE u.user_type = 'admin' AND f.is_resolved = 1
+GROUP BY u.user_id, u.username
+ORDER BY flags_resolved DESC;
+```
+
+**Purpose:** Evaluates admin response times and moderation quality. Identifies bottlenecks and ensures consistent platform governance.
+
+---
+
+## Installation & Setup
 
 ### Prerequisites
-- Python 3.8+
-- MySQL 5.7+
-- Mapbox account (for API token)
+- Python 3.8 or higher
+- MySQL 5.7 or higher
+- Mapbox account (free tier sufficient)
+- Git for version control
 
-### Steps
-
-1. **Clone the repository**
+### Step 1: Clone Repository
 ```bash
 git clone https://github.com/yourusername/cliff_jump_registry.git
 cd cliff_jump_registry
 ```
 
-2. **Install dependencies**
+### Step 2: Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Configure database and API keys**
+**Required packages:**
+- Flask>=3.0.0
+- Flask-Session>=0.5.0
+- PyMySQL>=1.1.0
+- PyYAML>=6.0
+
+### Step 3: Database Setup
+
+1. **Create Database:**
+```sql
+CREATE DATABASE cliff_jump_registry CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+2. **Run Initialization Script:**
+```bash
+mysql -u your_username -p cliff_jump_registry < database_init.sql
+```
+
+This creates all tables and populates sample data including test users.
+
+### Step 4: Configure Application
+
+1. **Copy configuration template:**
 ```bash
 cp config.example.yml config.yml
-# Edit config.yml with your database credentials and Mapbox token
 ```
 
-4. **Run the application**
-```bash
-python app.py
-```
-
-The application will be available at `http://localhost:5000` (or `http://0.0.0.0:5000` for network access).
-
-## Configuration
-
-Edit `config.yml` with your settings:
-
+2. **Edit config.yml with your credentials:**
 ```yaml
 db:
-  user: 'your_db_user'
+  user: 'your_db_username'
   pw: 'your_db_password'
-  host: 'your_db_host'
-  db: 'your_database_name'
+  host: 'localhost'  # or mysql.clarksonmsda.org
+  db: 'cliff_jump_registry'
 
 poll_user: 'your_username'
 
@@ -346,89 +616,438 @@ tables:
   user: 'Users'
   jumppoint: 'JumpPoints'
   location: 'Locations'
-  JumpLogs: 'JumpLogs'
-  LocationVerifications: 'LocationVerifications'
-  Reviews: 'Reviews'
-  SafetyReports: 'SafetyReports'
+  jumplog: 'JumpLogs'
+  review: 'Reviews'
+  safetyreport: 'SafetyReports'
+  flag: 'Flags'
 ```
 
-**⚠️ Important**: Never commit `config.yml` to version control. Keep `config.example.yml` as a template.
+3. **Obtain Mapbox Token:**
+   - Create free account at https://www.mapbox.com
+   - Navigate to Account → Access Tokens
+   - Copy default public token to config.yml
 
-## User Roles & Permissions
+### Step 5: Run Application
+```bash
+python app.py
+```
 
-### Guest
-- **Automatic**: All non-logged-in users become guests automatically
-- **Can**: View map, locations, jump points, reviews, safety reports
-- **Cannot**: Add/edit content, create jump logs, submit reviews/reports
+Application will be available at:
+- Local: http://127.0.0.1:5000
+- Network: http://0.0.0.0:5000
 
-### Registered
-- **Registration Required**: Users must create an account
-- **Can**: Everything guests can do, plus:
-  - Add new locations and jump points (published immediately)
-  - Create and manage personal jump logs (public or private)
-  - Submit reviews for locations
-  - Submit safety condition reports
-  - Flag inappropriate or inaccurate content
-- **Cannot**: Access admin features, unflag content, delete others' content
+### Step 6: Verify Installation
 
-### Admin
-- **Manual Creation**: Admins must be created by other admins or database
-- **Can**: Full system access:
-  - Manage all users (create, edit, delete, change roles)
-  - Review and moderate flagged content
-  - Unflag content after review
-  - Delete any content
-  - Access analytics dashboard
-  - Override any permissions
+1. Navigate to http://localhost:5000
+2. You should see the login page
+3. Test login with credentials: `admin` / `admin123`
+4. Map should display with sample locations
 
-**Permission Logic**: Enforced in Flask routes via session checks (`session['user']['user_type']`).
+---
+
+## API Endpoints
+
+### Endpoint Organization
+
+The application follows RESTful routing conventions with logical grouping:
+
+#### Authentication Endpoints
+```
+GET  /login              Display login form
+POST /login              Process login credentials
+GET  /register           Display registration form
+POST /register           Create new user account
+GET  /logout             End user session
+```
+
+#### Location Endpoints
+```
+GET  /locations/manage                List all locations (admin)
+GET  /locations/manage?pkval={id}     Edit specific location
+POST /locations/manage?action=insert  Create new location
+POST /locations/manage?action=update  Update existing location
+POST /locations/manage?action=delete  Delete location
+```
+
+#### Jump Point Endpoints
+```
+GET  /jumppoints/manage?location_id={id}     List location's jump points
+GET  /jumppoints/manage?pkval={id}           Edit jump point
+POST /jumppoints/manage?action=insert        Create jump point
+POST /jumppoints/manage?action=update        Update jump point
+POST /jumppoints/manage?action=delete        Delete jump point
+```
+
+#### Jump Log Endpoints
+```
+GET  /jumplogs/manage                My jump log diary
+GET  /jumplogs/manage?pkval={id}     Edit log entry
+POST /jumplogs/manage?action=insert  Create log entry
+POST /jumplogs/manage?action=update  Update log entry
+POST /jumplogs/manage?action=delete  Delete log entry
+```
+
+#### Review Endpoints
+```
+GET  /reviews/manage?location_id={id}   View location reviews
+GET  /reviews/manage?pkval={id}         Edit review
+POST /reviews/manage?action=insert      Submit review
+POST /reviews/manage?action=update      Update review
+POST /reviews/manage?action=delete      Delete review
+```
+
+#### Safety Report Endpoints
+```
+GET  /safetyreports/manage?location_id={id}   View safety reports
+GET  /safetyreports/manage?pkval={id}         Edit report
+POST /safetyreports/manage?action=insert      Submit report
+POST /safetyreports/manage?action=update      Update report
+POST /safetyreports/manage?action=delete      Delete report
+```
+
+#### Flag Endpoints
+```
+GET  /flags/add?flaggable_type={type}&flaggable_id={id}   Flag content
+POST /flags/add                                            Submit flag
+GET  /flags/view?flaggable_type={type}&flaggable_id={id}  View flags
+GET  /admin/flags                                          Admin flag review
+POST /flags/resolve                                        Resolve flag
+```
+
+#### Admin Endpoints
+```
+GET  /admin/analytics       Platform analytics dashboard
+GET  /users/manage          User management interface
+POST /users/manage          Create/update/delete users
+```
+
+#### API Endpoints (JSON)
+```
+GET  /api/locations                 GeoJSON of all locations
+GET  /api/jumppoints/{location_id}  Jump points for location
+GET  /api/reviews/{location_id}     Reviews with aggregates
+```
+
+### Endpoint Conventions
+- **GET** requests display forms or retrieve data
+- **POST** requests with `action` parameter perform CRUD operations
+- **Admin routes** require `user_type = 'admin'` in session
+- **Registered routes** require `user_type != 'guest'` in session
+- **API routes** return JSON for frontend consumption
+
+---
+
+## Testing
+
+### Testing Checklist
+
+#### Functional Testing
+
+**Authentication & Authorization:**
+- [ ] Guest auto-login works without credentials
+- [ ] Registered user login with valid credentials succeeds
+- [ ] Admin login with valid credentials succeeds
+- [ ] Invalid credentials show error message
+- [ ] Logout clears session and redirects to login
+- [ ] Guest users cannot access add/edit forms
+- [ ] Registered users cannot access admin pages
+- [ ] Session persists across page navigation
+
+**Location Management:**
+- [ ] Add new location with GPS coordinates
+- [ ] Location appears on map immediately
+- [ ] Edit existing location updates map marker
+- [ ] Delete location removes from map and database
+- [ ] Location validation rejects invalid coordinates
+- [ ] Location validation requires name
+
+**Jump Point Management:**
+- [ ] Add jump point to existing location
+- [ ] Jump point displays in location popup
+- [ ] Edit jump point updates information
+- [ ] Delete jump point removes from location
+- [ ] Height validation rejects negative values
+- [ ] Difficulty dropdown shows correct options
+
+**Jump Log Diary:**
+- [ ] Create new jump log entry
+- [ ] Private logs not visible to other users
+- [ ] Public logs visible in location details
+- [ ] Edit existing log entry
+- [ ] Delete log entry removes from diary
+- [ ] Jump date cannot be in future
+
+**Review System:**
+- [ ] Submit review with all rating dimensions
+- [ ] Review displays in location popup
+- [ ] Average ratings calculate correctly
+- [ ] Edit review updates ratings
+- [ ] Delete review removes from calculations
+- [ ] Cannot submit multiple reviews for same location
+
+**Safety Reporting:**
+- [ ] Submit safety report with conditions
+- [ ] Unsafe reports flag location on map
+- [ ] Recent reports show in location popup
+- [ ] Edit safety report updates conditions
+- [ ] Delete report removes from location
+
+**Flagging System:**
+- [ ] Flag location from map popup
+- [ ] Flag appears in admin dashboard
+- [ ] Multiple users can flag same content
+- [ ] Admin can resolve flag without deleting
+- [ ] Admin can resolve and delete content
+- [ ] Flag count decrements after resolution
+
+**Admin Features:**
+- [ ] Analytics dashboard displays metrics
+- [ ] Flagged content section shows unresolved flags
+- [ ] User management allows role changes
+- [ ] Admin can delete any content
+- [ ] Admin flag review shows all categories
+
+#### Database Testing
+
+**Data Integrity:**
+- [ ] Foreign key constraints prevent orphaned records
+- [ ] Cascading deletes remove related records appropriately
+- [ ] UNIQUE constraints prevent duplicate usernames
+- [ ] ENUM constraints restrict values to valid options
+- [ ] Coordinate validation prevents invalid GPS values
+
+**Query Performance:**
+- [ ] Location retrieval with < 500ms response time
+- [ ] Map loads all markers within 2 seconds
+- [ ] Analytics queries complete within 3 seconds
+- [ ] Review aggregation performs efficiently
+- [ ] Flag queries use appropriate indexes
+
+#### Security Testing
+
+**Input Validation:**
+- [ ] SQL injection attempts are blocked
+- [ ] XSS attempts are escaped in output
+- [ ] Form validation prevents empty required fields
+- [ ] Numeric fields reject non-numeric input
+- [ ] Date fields reject invalid dates
+
+**Access Control:**
+- [ ] Direct URL access to admin pages redirects guests
+- [ ] API endpoints validate user permissions
+- [ ] Session hijacking prevented with secure cookies
+- [ ] Password hashing prevents plaintext storage
+
+#### User Interface Testing
+
+**Responsive Design:**
+- [ ] Map interface works on mobile devices
+- [ ] Forms are usable on tablets and phones
+- [ ] Navigation menu collapses on small screens
+- [ ] Buttons are touch-friendly sizes
+
+**User Experience:**
+- [ ] Success messages display after actions
+- [ ] Error messages are clear and actionable
+- [ ] Loading indicators show during AJAX requests
+- [ ] Form validation provides immediate feedback
+
+### Test Data
+
+Use `database_init.sql` to populate test data:
+- 3 user accounts (guest, registered, admin)
+- 5 sample locations across different regions
+- 10+ jump points with varying difficulties
+- 15+ reviews with diverse ratings
+- 10+ safety reports (safe and unsafe)
+- 5+ flags for moderation testing
+
+### Automated Testing
+
+Run Python unit tests:
+```bash
+python -m pytest tests/
+```
+
+Run database integrity checks:
+```bash
+mysql -u username -p cliff_jump_registry < tests/integrity_check.sql
+```
+
+---
+
+## Framework Compliance
+
+### Flask Framework Best Practices
+
+**Routing Convention:**
+- RESTful URL structure with logical resource grouping
+- Consistent use of GET for display, POST for actions
+- Clear endpoint naming following `/resource/action` pattern
+
+**Template Inheritance:**
+- Base template (`base.html`) defines layout structure
+- Content blocks for page-specific content
+- Jinja2 templating for dynamic content rendering
+- Bootstrap 5 integration for responsive design
+
+**Session Management:**
+- Flask-Session with filesystem storage
+- Secure session handling with secret key
+- Role-based access control via session data
+
+**Database Abstraction:**
+- Base object pattern for consistent CRUD operations
+- PyMySQL for database connectivity
+- Parameterized queries preventing SQL injection
+
+**Error Handling:**
+- Server-side validation in model classes
+- User-friendly error messages
+- Graceful degradation for missing data
+
+### Database Design Principles
+
+**Normalization:**
+- Tables in 3rd Normal Form (3NF)
+- No redundant data except cached counts
+- Proper foreign key relationships
+
+**Indexing:**
+- Primary keys on all tables
+- Foreign key indexes for join performance
+- Unique constraints on usernames and emails
+
+**Data Integrity:**
+- ENUM constraints for categorical data
+- CHECK constraints for value ranges
+- NOT NULL constraints for required fields
+- Foreign key CASCADE for referential integrity
+
+---
+
+## Project Complexity Highlights
+
+### Advanced Features
+
+1. **Polymorphic Flagging System**
+   - Single Flags table references multiple content types
+   - Dynamic flag count caching on parent entities
+   - Multi-user flag aggregation with resolution workflow
+
+2. **Real-time Safety Monitoring**
+   - Date-aware unsafe condition detection
+   - Automatic location flagging based on recent reports
+   - Temporal filtering for relevant safety information
+
+3. **Multi-dimensional Review System**
+   - Three separate rating dimensions (overall, safety, access)
+   - Aggregated average calculations
+   - Review count tracking for statistical significance
+
+4. **Interactive Mapping Interface**
+   - Mapbox GL JS integration with custom markers
+   - Dynamic popup content loaded via AJAX
+   - Click-to-add location functionality
+   - GPS coordinate validation
+
+5. **Role-based Access Control**
+   - Three-tier permission hierarchy
+   - Session-based authentication
+   - Granular feature access by role
+
+6. **Analytics Dashboard**
+   - Aggregate queries across multiple tables
+   - Temporal analysis of platform activity
+   - Content moderation metrics
+   - User contribution leaderboards
+
+### Technical Challenges Solved
+
+- **Polymorphic relationships** without ORM overhead
+- **Cached aggregates** with manual consistency management
+- **Multi-table JOIN queries** for comprehensive analytics
+- **Geographic data handling** with coordinate validation
+- **Session state management** across request lifecycle
+- **Dynamic template rendering** with conditional content
+
+---
 
 ## Security Considerations
 
-### Current Security Measures
-1. **Session Management**: Flask-Session with filesystem storage
-2. **SQL Injection Protection**: Parameterized queries via pymysql
-3. **Role-Based Access Control**: Permissions enforced at route level
-4. **Input Validation**: Server-side validation in model classes
-5. **XSS Protection**: Jinja2 auto-escaping enabled
+### Current Implementation
+- Parameterized SQL queries (SQL injection protection)
+- Password hashing with MD5
+- Session-based authentication
+- Role-based access control
+- Input validation on all forms
+- XSS protection via Jinja2 auto-escaping
 
-### Security Improvements Needed (Priority)
-1. **Password Hashing**: ⚠️ **CRITICAL** - Replace MD5 with bcrypt or argon2
-2. **Secret Key**: ⚠️ **HIGH** - Move hardcoded secret key to environment variable
-3. **HTTPS**: Deploy with SSL/TLS certificate (Let's Encrypt)
-4. **CSRF Protection**: Implement Flask-WTF CSRF tokens
-5. **Rate Limiting**: Add Flask-Limiter to prevent abuse
+### Production Recommendations
+⚠️ **Before deploying to production:**
+1. Replace MD5 with bcrypt or argon2 for password hashing
+2. Move secret key to environment variable
+3. Deploy with HTTPS/SSL certificate
+4. Implement CSRF tokens with Flask-WTF
+5. Add rate limiting with Flask-Limiter
+6. Enable CORS restrictions
+7. Implement logging and monitoring
+8. Regular security audits
+
+---
 
 ## Future Enhancements
 
-### Short-Term (3-6 months)
-- Photo upload functionality (currently URL-only)
-- Email notifications for verification status
-- Search functionality for locations
-- Filter map by difficulty, height, status
-- Weather integration (current conditions at locations)
+**Short-term (3-6 months):**
+- Photo upload functionality
+- Email notifications for flags and mentions
+- Advanced search and filtering
+- Weather API integration
+- Mobile app development
 
-### Medium-Term (6-12 months)
-- GPS auto-fill for mobile location submission
-- Offline mode for remote locations (PWA)
-- Social features (follow users, friends)
-- Achievement badges (heights, locations visited)
-- Community forum/discussion boards
+**Medium-term (6-12 months):**
+- GPS auto-location for mobile devices
+- Offline PWA functionality
+- Social features (follow users, friend system)
+- Achievement badges
+- Community forum
 
-### Long-Term (12+ months)
+**Long-term (12+ months):**
 - Multi-language support (i18n)
-- Integration with fitness trackers
+- Fitness tracker integration
 - Event calendar for group jumps
 - Video upload support
-- AR features for on-site navigation
+- Augmented reality navigation
 
-## Disclaimer
+---
+
+## License & Disclaimer
 
 **⚠️ IMPORTANT SAFETY NOTICE ⚠️**
 
-Cliff jumping is an inherently dangerous activity that can result in serious injury or death. This application is provided for informational purposes only. Users assume all risks associated with cliff jumping activities. The developers are NOT responsible for the accuracy of information or liable for injuries resulting from use of this application.
+Cliff jumping is an inherently dangerous activity that can result in serious injury or death. This application is provided for informational purposes only. Users assume all risks associated with cliff jumping activities. The developers and contributors are NOT responsible for the accuracy of information or liable for injuries resulting from use of this application.
 
-Always assess conditions yourself, never jump alone, know the water depth, and be aware of local laws.
+**Always:**
+- Assess conditions yourself before jumping
+- Never jump alone
+- Know the water depth and check for obstacles
+- Be aware of local laws and regulations
+- Seek professional training
+- Use appropriate safety equipment
+
+**License:** MIT License
+**Copyright:** 2024 Theodore Russell
+
+---
+
+## Contact & Support
+
+**Developer:** Theodore Russell
+**Email:** threed@clarkson.edu
+**GitHub:** https://github.com/trr2ke/cliff_jump_registry
+**Institution:** Clarkson University
+
+For bug reports, feature requests, or questions about the application, please open an issue on the GitHub repository.
 
 ---
 

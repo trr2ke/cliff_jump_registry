@@ -3,6 +3,6 @@
 {% block content %}
             <div>
 			{{ msg }}<br>
-            <a href="manage">Continue</a>
+            <a href="{{ continue_url if continue_url else 'manage' }}">Continue</a>
 			</div>
 {% endblock %}

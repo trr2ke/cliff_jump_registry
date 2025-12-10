@@ -13,4 +13,4 @@ tables:
   jumplog: 'JumpLogs'
   review: 'Reviews'
   safetyreport: 'SafetyReports'
-  locationverification: 'LocationVerifications'
+  flag: 'Flags'

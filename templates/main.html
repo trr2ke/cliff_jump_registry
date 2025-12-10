@@ -39,6 +39,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                         <li><a class="dropdown-item" href="/admin/analytics"><i class="bi bi-bar-chart-fill"></i> Analytics Dashboard</a></li>
+                        <li><a class="dropdown-item" href="/admin/flags"><i class="bi bi-flag-fill"></i> Review Flags</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/locations/manage"><i class="bi bi-geo-alt"></i> Manage Locations</a></li>
                         <li><a class="dropdown-item" href="/users/manage"><i class="bi bi-people"></i> List All Users</a></li>
@@ -360,6 +361,7 @@
 								popupContent += `<a href="/jumppoints/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-success"><i class="bi bi-plus-circle"></i> Add Jump Point</a>`;
 								popupContent += `<a href="/reviews/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-primary"><i class="bi bi-star"></i> Write Review</a>`;
 								popupContent += `<a href="/safetyreports/manage?pkval=new&location_id=${props.location_id}" class="btn btn-sm btn-warning"><i class="bi bi-shield-exclamation"></i> Report Conditions</a>`;
+								popupContent += `<a href="/flags/add?flaggable_type=location&flaggable_id=${props.location_id}" class="btn btn-sm btn-outline-danger"><i class="bi bi-flag"></i> Flag Location</a>`;
 								popupContent += '</div>';
 								{% endif %}
 

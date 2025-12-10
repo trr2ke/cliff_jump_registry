@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-flag"></i> Flag Content for Review</h2>
+    <p class="text-muted">Report inaccurate, dangerous, or inappropriate content to administrators.</p>
+
+    <form method="POST" action="/flags/add">
+        {% if obj.errors|length > 0 %}
+        <div class="alert alert-danger">
+            {% for error in obj.errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if flaggable_type and flaggable_id %}
+        <input type="hidden" name="flaggable_type" value="{{ flaggable_type }}">
+        <input type="hidden" name="flaggable_id" value="{{ flaggable_id }}">
+
+        <div class="alert alert-info">
+            <strong>Flagging:</strong> {{ content_name or (flaggable_type|title + ' #' + flaggable_id|string) }}
+        </div>
+        {% else %}
+        <div class="mb-3">
+            <label for="flaggable_type" class="form-label">Content Type *</label>
+            <select class="form-select" name="flaggable_type" id="flaggable_type" required>
+                <option value="">Select content type...</option>
+                <option value="location">Location</option>
+                <option value="jumppoint">Jump Point</option>
+                <option value="review">Review</option>
+                <option value="safetyreport">Safety Report</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="flaggable_id" class="form-label">Content ID *</label>
+            <input type="number" class="form-control" name="flaggable_id" id="flaggable_id" required placeholder="Enter the ID number">
+            <div class="form-text">The ID of the specific content you want to flag.</div>
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="flag_category" class="form-label">Issue Category *</label>
+            <select class="form-select" name="flag_category" id="flag_category" required>
+                <option value="">Select a category...</option>
+                {% for cat in categories %}
+                <option value="{{ cat.value }}">{{ cat.text }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="flag_reason" class="form-label">Detailed Explanation *</label>
+            <textarea class="form-control" name="flag_reason" id="flag_reason" rows="5" required
+                placeholder="Please explain why you're flagging this content. Be specific about what is wrong or concerning. (Minimum 10 characters)"></textarea>
+            <div class="form-text">Provide as much detail as possible to help administrators review this flag.</div>
+        </div>
+
+        <button type="submit" class="btn btn-warning"><i class="bi bi-flag"></i> Submit Flag</button>
+        <a href="/main" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

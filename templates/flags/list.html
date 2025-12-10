@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2><i class="bi bi-flag"></i> Flags for {{ content_name or (flaggable_type|title + ' #' + flaggable_id|string) }}</h2>
+
+    {% if flags|length == 0 %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No flags have been submitted for this content.
+    </div>
+    {% else %}
+    <p class="text-muted">{{ flags|length }} flag(s) submitted for this content.</p>
+
+    <div class="list-group">
+        {% for flag in flags %}
+        <div class="list-group-item {% if flag.is_resolved %}bg-light{% else %}border-warning{% endif %}">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">
+                    <span class="badge bg-warning">{{ flag.flag_category|title }}</span>
+                    {% if flag.is_resolved %}
+                    <span class="badge bg-success">Resolved</span>
+                    {% else %}
+                    <span class="badge bg-danger">Pending</span>
+                    {% endif %}
+                </h5>
+                <small>{{ flag.flag_date }}</small>
+            </div>
+            <p class="mb-1">{{ flag.flag_reason }}</p>
+            <small class="text-muted">Flagged by: User #{{ flag.user_id }}</small>
+
+            {% if flag.is_resolved %}
+            <div class="mt-2 p-2 bg-white border rounded">
+                <strong>Admin Resolution:</strong>
+                <p class="mb-1">{{ flag.resolution_notes or 'No notes provided.' }}</p>
+                <small class="text-muted">Resolved by Admin #{{ flag.resolved_by }} on {{ flag.resolved_date }}</small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="mt-3">
+        <a href="/main" class="btn btn-secondary">Back to Map</a>
+    </div>
+</div>
+{% endblock %}

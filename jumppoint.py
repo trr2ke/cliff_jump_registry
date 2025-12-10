@@ -1,18 +1,33 @@
+"""
+JumpPoint Model
+===============
 
-import datetime
+Manages individual jump points within cliff jumping locations.
+
+Each jump point represents a specific spot to jump from within a location,
+with its own height, difficulty rating, and danger documentation.
+"""
+
 from baseObject import baseObject
 
 class jumppoint(baseObject):
     def __init__(self):
+        """Initialize jump point object and define difficulty levels."""
         self.setup()
         self.difficulty_levels = [
-            {'value':'beginner','text':'Beginner'},
-            {'value':'intermediate','text':'Intermediate'},
-            {'value':'advanced','text':'Advanced'},
-            {'value':'expert','text':'Expert'}
+            {'value': 'beginner', 'text': 'Beginner'},
+            {'value': 'intermediate', 'text': 'Intermediate'},
+            {'value': 'advanced', 'text': 'Advanced'},
+            {'value': 'expert', 'text': 'Expert'}
         ]
 
     def difficulty_list(self):
+        """
+        Get list of valid difficulty values.
+
+        Returns:
+            list: List of difficulty strings
+        """
         dl = []
         for item in self.difficulty_levels:
             dl.append(item['value'])
@@ -77,9 +92,9 @@ class jumppoint(baseObject):
         if error:
             self.errors.append(error)
 
-        # Auto-set flagging defaults
-        if 'is_flagged' not in self.data[0]:
-            self.data[0]['is_flagged'] = 0
+        # Auto-set flag_count default
+        if 'flag_count' not in self.data[0]:
+            self.data[0]['flag_count'] = 0
 
         return len(self.errors) == 0
 
@@ -106,7 +121,17 @@ class jumppoint(baseObject):
         return len(self.errors) == 0
 
     def get_by_location(self, location_id):
-        """Get all jump points for a specific location"""
+        """
+        Get all jump points for a specific location.
+
+        Results are ordered by height (tallest first).
+
+        Args:
+            location_id (int): ID of the parent location
+
+        Returns:
+            list: List of jump point dictionaries
+        """
         self.data = []
         sql = f"SELECT * FROM `{self.tn}` WHERE `location_id` = %s ORDER BY `height_feet` DESC"
         self.cur.execute(sql, [location_id])

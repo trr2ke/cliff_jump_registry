@@ -79,33 +79,48 @@
         <div class="col-md-6 mb-3">
             <div class="card border-warning">
                 <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="bi bi-flag-fill"></i> Flagged Locations</h5>
+                    <h5 class="mb-0"><i class="bi bi-flag-fill"></i> Flagged Content</h5>
                 </div>
                 <div class="card-body">
                     {% if analytics.flagged_locations_detail|length > 0 %}
                     <div class="list-group">
                         {% for loc in analytics.flagged_locations_detail %}
                         <div class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="mb-1"><strong>{{ loc.name }}</strong></h6>
-                                <small class="text-muted">{{ loc.flagged_date }}</small>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1"><strong>{{ loc.name }}</strong></h6>
+                                    <p class="mb-1">
+                                        <span class="badge bg-danger">{{ loc.active_flags }} unresolved flag{{ 's' if loc.active_flags != 1 else '' }}</span>
+                                        <span class="badge bg-secondary">{{ loc.flag_count }} total</span>
+                                    </p>
+                                    {% if loc.flagged_by_users %}
+                                    <p class="mb-2"><small><i class="bi bi-people"></i> Flagged by: {{ loc.flagged_by_users }}</small></p>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <p class="mb-1"><small><i class="bi bi-person"></i> Flagged by: {{ loc.flagged_by_username }}</small></p>
-                            <p class="mb-2"><strong>Reason:</strong> {{ loc.flag_reason }}</p>
-                            <form method="POST" action="/locations/unflag" style="display:inline;">
-                                <input type="hidden" name="location_id" value="{{ loc.location_id }}">
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="bi bi-check"></i> Unflag
-                                </button>
-                            </form>
-                            <a href="/locations/manage?pkval={{ loc.location_id }}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="/flags/view?flaggable_type=location&flaggable_id={{ loc.location_id }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-flag"></i> Review Flags
+                                </a>
+                                <a href="/locations/manage?pkval={{ loc.location_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
+                    <div class="mt-3">
+                        <a href="/admin/flags" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-shield-check"></i> View All Flags
+                        </a>
+                    </div>
                     {% else %}
-                    <p class="text-muted">No flagged locations. Community is healthy!</p>
+                    <p class="text-muted">No flagged content. Community is healthy!</p>
+                    <div class="mt-3">
+                        <a href="/admin/flags" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-shield-check"></i> Flag Management
+                        </a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -114,7 +129,7 @@
 
     <!-- Additional Stats Cards -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-primary">
                 <div class="card-body text-center">
                     <i class="bi bi-flag-fill text-primary" style="font-size: 2rem;"></i>
@@ -123,7 +138,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-success">
                 <div class="card-body text-center">
                     <i class="bi bi-journal-text text-success" style="font-size: 2rem;"></i>
@@ -132,12 +147,24 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-warning">
                 <div class="card-body text-center">
                     <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
                     <h3 class="mt-2">{{ analytics.unsafe_reports }}</h3>
                     <p class="text-muted mb-0">Unsafe Conditions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card {% if analytics.unresolved_flags > 0 %}border-danger{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-flag-fill {% if analytics.unresolved_flags > 0 %}text-danger{% else %}text-secondary{% endif %}" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ analytics.unresolved_flags }}</h3>
+                    <p class="text-muted mb-0">Unresolved Flags</p>
+                    <a href="/admin/flags" class="btn btn-sm {% if analytics.unresolved_flags > 0 %}btn-danger{% else %}btn-outline-secondary{% endif %} mt-2">
+                        Review
+                    </a>
                 </div>
             </div>
         </div>
@@ -321,6 +348,9 @@
                 <div class="card-body">
                     <h5><i class="bi bi-lightning-fill"></i> Quick Actions</h5>
                     <div class="btn-group" role="group">
+                        <a href="/admin/flags" class="btn btn-warning">
+                            <i class="bi bi-flag-fill"></i> Review Flags
+                        </a>
                         <a href="/users/manage" class="btn btn-primary">
                             <i class="bi bi-people"></i> Manage Users
                         </a>
