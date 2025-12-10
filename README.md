@@ -126,9 +126,9 @@ Use these credentials to test different user role functionalities:
 | Role | Username | Password | Purpose |
 |------|----------|----------|---------|
 | **Guest** | `guest` | *(auto-login)* | Test read-only browsing without registration |
-| **Registered User** | `test_user` | `jumper2024` | Test content creation and community features |
-| **Registered User** | `safety_reporter` | `safe123` | Test safety reporting and review submission |
-| **Admin** | `admin` | `admin123` | Test moderation, flag management, and analytics |
+| **Registered User** | `threed` | `admin` | Test content creation and community features |
+| **Registered User** | `test2` | `admin` | Test safety reporting and review submission |
+| **Admin** | `admin` | `admin` | Test moderation, flag management, and analytics |
 
 **Important Notes:**
 - Guest accounts are automatically created when users visit without logging in
@@ -222,7 +222,7 @@ Locations (1) ──has─────> (N) Reviews
 Locations (1) ──has─────> (N) SafetyReports
 Locations (1) ──logged_at> (N) JumpLogs
 
-Flags (N) ──references─> (1) Location | JumpPoint | Review | SafetyReport
+Flags (N) ──references─> (1) Location | JumpPoint 
 ```
 
 ### Table Definitions
@@ -737,132 +737,7 @@ GET  /api/reviews/{location_id}     Reviews with aggregates
 
 ---
 
-## Testing
-
-### Testing Checklist
-
-#### Functional Testing
-
-**Authentication & Authorization:**
-- [ ] Guest auto-login works without credentials
-- [ ] Registered user login with valid credentials succeeds
-- [ ] Admin login with valid credentials succeeds
-- [ ] Invalid credentials show error message
-- [ ] Logout clears session and redirects to login
-- [ ] Guest users cannot access add/edit forms
-- [ ] Registered users cannot access admin pages
-- [ ] Session persists across page navigation
-
-**Location Management:**
-- [ ] Add new location with GPS coordinates
-- [ ] Location appears on map immediately
-- [ ] Edit existing location updates map marker
-- [ ] Delete location removes from map and database
-- [ ] Location validation rejects invalid coordinates
-- [ ] Location validation requires name
-
-**Jump Point Management:**
-- [ ] Add jump point to existing location
-- [ ] Jump point displays in location popup
-- [ ] Edit jump point updates information
-- [ ] Delete jump point removes from location
-- [ ] Height validation rejects negative values
-- [ ] Difficulty dropdown shows correct options
-
-**Jump Log Diary:**
-- [ ] Create new jump log entry
-- [ ] Private logs not visible to other users
-- [ ] Public logs visible in location details
-- [ ] Edit existing log entry
-- [ ] Delete log entry removes from diary
-- [ ] Jump date cannot be in future
-
-**Review System:**
-- [ ] Submit review with all rating dimensions
-- [ ] Review displays in location popup
-- [ ] Average ratings calculate correctly
-- [ ] Edit review updates ratings
-- [ ] Delete review removes from calculations
-- [ ] Cannot submit multiple reviews for same location
-
-**Safety Reporting:**
-- [ ] Submit safety report with conditions
-- [ ] Unsafe reports flag location on map
-- [ ] Recent reports show in location popup
-- [ ] Edit safety report updates conditions
-- [ ] Delete report removes from location
-
-**Flagging System:**
-- [ ] Flag location from map popup
-- [ ] Flag appears in admin dashboard
-- [ ] Multiple users can flag same content
-- [ ] Admin can resolve flag without deleting
-- [ ] Admin can resolve and delete content
-- [ ] Flag count decrements after resolution
-
-**Admin Features:**
-- [ ] Analytics dashboard displays metrics
-- [ ] Flagged content section shows unresolved flags
-- [ ] User management allows role changes
-- [ ] Admin can delete any content
-- [ ] Admin flag review shows all categories
-
-#### Database Testing
-
-**Data Integrity:**
-- [ ] Foreign key constraints prevent orphaned records
-- [ ] Cascading deletes remove related records appropriately
-- [ ] UNIQUE constraints prevent duplicate usernames
-- [ ] ENUM constraints restrict values to valid options
-- [ ] Coordinate validation prevents invalid GPS values
-
-**Query Performance:**
-- [ ] Location retrieval with < 500ms response time
-- [ ] Map loads all markers within 2 seconds
-- [ ] Analytics queries complete within 3 seconds
-- [ ] Review aggregation performs efficiently
-- [ ] Flag queries use appropriate indexes
-
-#### Security Testing
-
-**Input Validation:**
-- [ ] SQL injection attempts are blocked
-- [ ] XSS attempts are escaped in output
-- [ ] Form validation prevents empty required fields
-- [ ] Numeric fields reject non-numeric input
-- [ ] Date fields reject invalid dates
-
-**Access Control:**
-- [ ] Direct URL access to admin pages redirects guests
-- [ ] API endpoints validate user permissions
-- [ ] Session hijacking prevented with secure cookies
-- [ ] Password hashing prevents plaintext storage
-
-#### User Interface Testing
-
-**Responsive Design:**
-- [ ] Map interface works on mobile devices
-- [ ] Forms are usable on tablets and phones
-- [ ] Navigation menu collapses on small screens
-- [ ] Buttons are touch-friendly sizes
-
-**User Experience:**
-- [ ] Success messages display after actions
-- [ ] Error messages are clear and actionable
-- [ ] Loading indicators show during AJAX requests
-- [ ] Form validation provides immediate feedback
-
-### Test Data
-
-Use `database_init.sql` to populate test data:
-- 3 user accounts (guest, registered, admin)
-- 5 sample locations across different regions
-- 10+ jump points with varying difficulties
-- 15+ reviews with diverse ratings
-- 10+ safety reports (safe and unsafe)
-- 5+ flags for moderation testing
-
-### Automated Testing
+## Automated Testing
 
 Run Python unit tests:
 ```bash
@@ -873,56 +748,6 @@ Run database integrity checks:
 ```bash
 mysql -u username -p cliff_jump_registry < tests/integrity_check.sql
 ```
-
----
-
-## Framework Compliance
-
-### Flask Framework Best Practices
-
-**Routing Convention:**
-- RESTful URL structure with logical resource grouping
-- Consistent use of GET for display, POST for actions
-- Clear endpoint naming following `/resource/action` pattern
-
-**Template Inheritance:**
-- Base template (`base.html`) defines layout structure
-- Content blocks for page-specific content
-- Jinja2 templating for dynamic content rendering
-- Bootstrap 5 integration for responsive design
-
-**Session Management:**
-- Flask-Session with filesystem storage
-- Secure session handling with secret key
-- Role-based access control via session data
-
-**Database Abstraction:**
-- Base object pattern for consistent CRUD operations
-- PyMySQL for database connectivity
-- Parameterized queries preventing SQL injection
-
-**Error Handling:**
-- Server-side validation in model classes
-- User-friendly error messages
-- Graceful degradation for missing data
-
-### Database Design Principles
-
-**Normalization:**
-- Tables in 3rd Normal Form (3NF)
-- No redundant data except cached counts
-- Proper foreign key relationships
-
-**Indexing:**
-- Primary keys on all tables
-- Foreign key indexes for join performance
-- Unique constraints on usernames and emails
-
-**Data Integrity:**
-- ENUM constraints for categorical data
-- CHECK constraints for value ranges
-- NOT NULL constraints for required fields
-- Foreign key CASCADE for referential integrity
 
 ---
 
@@ -962,37 +787,6 @@ mysql -u username -p cliff_jump_registry < tests/integrity_check.sql
    - Content moderation metrics
    - User contribution leaderboards
 
-### Technical Challenges Solved
-
-- **Polymorphic relationships** without ORM overhead
-- **Cached aggregates** with manual consistency management
-- **Multi-table JOIN queries** for comprehensive analytics
-- **Geographic data handling** with coordinate validation
-- **Session state management** across request lifecycle
-- **Dynamic template rendering** with conditional content
-
----
-
-## Security Considerations
-
-### Current Implementation
-- Parameterized SQL queries (SQL injection protection)
-- Password hashing with MD5
-- Session-based authentication
-- Role-based access control
-- Input validation on all forms
-- XSS protection via Jinja2 auto-escaping
-
-### Production Recommendations
-⚠️ **Before deploying to production:**
-1. Replace MD5 with bcrypt or argon2 for password hashing
-2. Move secret key to environment variable
-3. Deploy with HTTPS/SSL certificate
-4. Implement CSRF tokens with Flask-WTF
-5. Add rate limiting with Flask-Limiter
-6. Enable CORS restrictions
-7. Implement logging and monitoring
-8. Regular security audits
 
 ---
 
@@ -1035,15 +829,13 @@ Cliff jumping is an inherently dangerous activity that can result in serious inj
 - Seek professional training
 - Use appropriate safety equipment
 
-**License:** MIT License
-**Copyright:** 2024 Theodore Russell
 
 ---
 
 ## Contact & Support
 
-**Developer:** Theodore Russell
-**Email:** threed@clarkson.edu
+**Developer:** Theodore Reed
+**Email:** threed@clarkson.edu or trr2ke@gmail.com
 **GitHub:** https://github.com/trr2ke/cliff_jump_registry
 **Institution:** Clarkson University
 
