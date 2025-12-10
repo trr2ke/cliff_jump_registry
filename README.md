@@ -1,6 +1,6 @@
 # Cliff Jump Registry
 
-**Project Team:** Theodore Russell
+**Project Team:** Theodore Reed
 **Course:** Database Design & Management
 **Institution:** Clarkson University
 

@@ -12,7 +12,7 @@ Features:
 - Real-time safety condition reporting
 - Community flagging system for content moderation
 
-Author: Theodore Russell
+Author: Theodore Reed
 License: MIT
 """
 
